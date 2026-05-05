@@ -1,0 +1,52 @@
+@model LoginViewModel
+@{ ViewData["Title"] = "Sign In"; }
+
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-header">
+            <span class="auth-icon">⬡</span>
+            <h1>Unlock your vault</h1>
+            <p>Both your password and encryption key are required.</p>
+        </div>
+
+        <form asp-action="Login" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+            <div asp-validation-summary="All" class="validation-summary"></div>
+
+            <div class="field-group">
+                <label asp-for="Email">Email</label>
+                <input asp-for="Email" type="email" placeholder="you@example.com" autocomplete="email" />
+                <span asp-validation-for="Email" class="field-error"></span>
+            </div>
+
+            <div class="field-group">
+                <label asp-for="Password">Password</label>
+                <div class="input-eye">
+                    <input asp-for="Password" type="password" placeholder="Your account password" id="pwd" autocomplete="current-password" />
+                    <button type="button" class="eye-btn" data-target="pwd">👁</button>
+                </div>
+                <span asp-validation-for="Password" class="field-error"></span>
+            </div>
+
+            <div class="field-group">
+                <label asp-for="EncryptionKey">Encryption Key</label>
+                <div class="input-eye">
+                    <input asp-for="EncryptionKey" type="password" placeholder="Your encryption key" id="enc" autocomplete="off" />
+                    <button type="button" class="eye-btn" data-target="enc">👁</button>
+                </div>
+                <span asp-validation-for="EncryptionKey" class="field-error"></span>
+            </div>
+
+            <div class="field-group field-inline">
+                <label>
+                    <input asp-for="RememberMe" type="checkbox" /> Remember me
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full">Unlock Vault</button>
+        </form>
+
+        <p class="auth-footer">No vault yet? <a asp-action="Register">Create one</a></p>
+    </div>
+</div>

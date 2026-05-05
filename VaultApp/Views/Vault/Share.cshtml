@@ -1,0 +1,37 @@
+@model ShareViewModel
+@{ ViewData["Title"] = "Share Entry"; }
+
+<div class="form-page">
+    <div class="form-card">
+        <div class="form-card-header">
+            <a asp-action="Index" class="back-link">← Vault</a>
+            <h1>Share Entry</h1>
+        </div>
+
+        <div class="share-info">
+            <span class="share-info-icon">🔗</span>
+            <div>
+                <strong>@Model.SiteName</strong>
+                <p>Share this entry with another KeyVault user. They must have an account to receive it.</p>
+            </div>
+        </div>
+
+        <form asp-action="Share" method="post">
+            @Html.AntiForgeryToken()
+            <input asp-for="VaultEntryId" type="hidden" />
+            <input asp-for="SiteName" type="hidden" />
+            <div asp-validation-summary="All" class="validation-summary"></div>
+
+            <div class="field-group">
+                <label asp-for="RecipientEmail">Recipient's Email</label>
+                <input asp-for="RecipientEmail" type="email" placeholder="friend@example.com" />
+                <span asp-validation-for="RecipientEmail" class="field-error"></span>
+            </div>
+
+            <div class="form-actions">
+                <a asp-action="Index" class="btn btn-outline">Cancel</a>
+                <button type="submit" class="btn btn-primary">Share Entry</button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,34 @@
+@{
+    ViewData["Title"] = "Secure Password Vault";
+    Layout = "_Layout";
+}
+
+<div class="hero">
+    <div class="hero-badge">AES-256 · PBKDF2 · HMAC-SHA256</div>
+    <h1 class="hero-title">Your passwords,<br><em>encrypted end-to-end.</em></h1>
+    <p class="hero-sub">
+        KeyVault encrypts every password with your personal encryption key —
+        a key that never leaves your session. Even we can't read your vault.
+    </p>
+    <div class="hero-cta">
+        <a class="btn btn-primary" asp-controller="Account" asp-action="Register">Create Vault</a>
+        <a class="btn btn-outline" asp-controller="Account" asp-action="Login">Sign In</a>
+    </div>
+    <div class="feature-grid">
+        <div class="feature">
+            <span class="feature-icon">🔐</span>
+            <h3>Dual-factor unlock</h3>
+            <p>Login requires both your password AND a separate encryption key.</p>
+        </div>
+        <div class="feature">
+            <span class="feature-icon">🗄️</span>
+            <h3>Encrypted at rest</h3>
+            <p>Every entry uses a unique IV. Ciphertext is authenticated with HMAC.</p>
+        </div>
+        <div class="feature">
+            <span class="feature-icon">🤝</span>
+            <h3>Secure sharing</h3>
+            <p>Share entries with other vault users without exposing your key.</p>
+        </div>
+    </div>
+</div>

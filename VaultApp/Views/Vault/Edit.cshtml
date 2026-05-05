@@ -1,0 +1,56 @@
+@model VaultEntryViewModel
+@{ ViewData["Title"] = "Edit Entry"; }
+
+<div class="form-page">
+    <div class="form-card">
+        <div class="form-card-header">
+            <a asp-action="Index" class="back-link">← Vault</a>
+            <h1>Edit Entry</h1>
+        </div>
+
+        <form asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
+            <input asp-for="Id" type="hidden" />
+            <div asp-validation-summary="All" class="validation-summary"></div>
+
+            <div class="field-group">
+                <label asp-for="SiteName">Site / App Name</label>
+                <input asp-for="SiteName" />
+                <span asp-validation-for="SiteName" class="field-error"></span>
+            </div>
+
+            <div class="field-group">
+                <label asp-for="SiteUrl">Site URL <span class="optional">(optional)</span></label>
+                <input asp-for="SiteUrl" type="url" />
+                <span asp-validation-for="SiteUrl" class="field-error"></span>
+            </div>
+
+            <div class="field-group">
+                <label asp-for="Username">Username / Email</label>
+                <input asp-for="Username" />
+                <span asp-validation-for="Username" class="field-error"></span>
+            </div>
+
+            <div class="field-group">
+                <label asp-for="Password">Password</label>
+                <div class="input-eye">
+                    <input asp-for="Password" type="password" id="vault-pwd" autocomplete="new-password" />
+                    <button type="button" class="eye-btn" data-target="vault-pwd">👁</button>
+                </div>
+                <button type="button" class="btn-generate" id="gen-btn">Generate strong password</button>
+                <span asp-validation-for="Password" class="field-error"></span>
+            </div>
+
+            <div class="field-group">
+                <label asp-for="Notes">Notes <span class="optional">(optional)</span></label>
+                <textarea asp-for="Notes" rows="3"></textarea>
+                <span asp-validation-for="Notes" class="field-error"></span>
+            </div>
+
+            <div class="form-actions">
+                <a asp-action="Index" class="btn btn-outline">Cancel</a>
+                <button type="submit" class="btn btn-primary">Update Entry</button>
+            </div>
+        </form>
+    </div>
+</div>

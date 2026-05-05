@@ -1,0 +1,68 @@
+@model RegisterViewModel
+@{ ViewData["Title"] = "Create Vault"; }
+
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-header">
+            <span class="auth-icon">⬡</span>
+            <h1>Create your vault</h1>
+            <p>You'll need two credentials to unlock your vault.</p>
+        </div>
+
+        <form asp-action="Register" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="All" class="validation-summary"></div>
+
+            <div class="field-group">
+                <label asp-for="Email">Email</label>
+                <input asp-for="Email" type="email" placeholder="you@example.com" autocomplete="email" />
+                <span asp-validation-for="Email" class="field-error"></span>
+            </div>
+
+            <div class="field-divider"><span>Account password</span></div>
+
+            <div class="field-group">
+                <label asp-for="Password">Password</label>
+                <div class="input-eye">
+                    <input asp-for="Password" type="password" placeholder="Min. 8 characters" id="pwd1" autocomplete="new-password" />
+                    <button type="button" class="eye-btn" data-target="pwd1">👁</button>
+                </div>
+                <span asp-validation-for="Password" class="field-error"></span>
+            </div>
+
+            <div class="field-group">
+                <label asp-for="ConfirmPassword">Confirm Password</label>
+                <div class="input-eye">
+                    <input asp-for="ConfirmPassword" type="password" placeholder="Repeat password" id="pwd2" autocomplete="new-password" />
+                    <button type="button" class="eye-btn" data-target="pwd2">👁</button>
+                </div>
+                <span asp-validation-for="ConfirmPassword" class="field-error"></span>
+            </div>
+
+            <div class="field-divider"><span>Encryption key <span class="badge-warning">Keep this safe!</span></span></div>
+            <p class="field-hint">This key encrypts your vault. If you lose it, your passwords cannot be recovered. Min. 12 characters.</p>
+
+            <div class="field-group">
+                <label asp-for="EncryptionKey">Encryption Key</label>
+                <div class="input-eye">
+                    <input asp-for="EncryptionKey" type="password" placeholder="Min. 12 characters" id="enc1" autocomplete="off" />
+                    <button type="button" class="eye-btn" data-target="enc1">👁</button>
+                </div>
+                <span asp-validation-for="EncryptionKey" class="field-error"></span>
+            </div>
+
+            <div class="field-group">
+                <label asp-for="ConfirmEncryptionKey">Confirm Encryption Key</label>
+                <div class="input-eye">
+                    <input asp-for="ConfirmEncryptionKey" type="password" placeholder="Repeat encryption key" id="enc2" autocomplete="off" />
+                    <button type="button" class="eye-btn" data-target="enc2">👁</button>
+                </div>
+                <span asp-validation-for="ConfirmEncryptionKey" class="field-error"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full">Create Vault</button>
+        </form>
+
+        <p class="auth-footer">Already have a vault? <a asp-action="Login">Sign in</a></p>
+    </div>
+</div>

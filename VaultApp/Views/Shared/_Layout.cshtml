@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(ViewData["Title"] != null ? ViewData["Title"] + " — " : "")Pass Knots</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <div class="noise"></div>
+
+    <nav class="topbar">
+        <a class="brand" asp-controller="Home" asp-action="Index">
+            <span class="brand-icon">⬡</span>
+            <span class="brand-text">Pass Knots</span>
+        </a>
+        <div class="nav-actions">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <span class="nav-user">@User.Identity.Name</span>
+                <a class="nav-link" asp-controller="Vault" asp-action="Index">Vault</a>
+                <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="nav-link btn-ghost">Sign Out</button>
+                </form>
+            }
+            else
+            {
+                <a class="nav-link" asp-controller="Account" asp-action="Login">Sign In</a>
+                <a class="nav-link btn-accent" asp-controller="Account" asp-action="Register">Register</a>
+            }
+        </div>
+    </nav>
+
+    <main class="main-content">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success">@TempData["Success"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-error">@TempData["Error"]</div>
+        }
+        @RenderBody()
+    </main>
+
+    <script src="~/js/site.js"></script>
+</body>
+</html>
