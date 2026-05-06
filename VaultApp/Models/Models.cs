@@ -110,7 +110,7 @@ public class VaultEntryViewModel
     public string Password { get; set; } = "";
 
     [MaxLength(500)]
-    public string Notes { get; set; } = "";
+    public string? Notes { get; set; } = "";
 }
 
 public class ShareViewModel

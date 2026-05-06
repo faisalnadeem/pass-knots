@@ -65,6 +65,14 @@
                                 <span class="entry-value entry-notes">@item.Entry.Notes</span>
                             </div>
                         }
+                        else
+                        {
+                            <div class="entry-field">
+                                <span class="entry-label">Notes</span>
+                                <span class="entry-value entry-notes">None</span>
+                            </div>
+
+                        }
 
                         <div class="entry-actions">
                             <a asp-action="Edit" asp-route-id="@item.Entry.Id" class="btn btn-sm">Edit</a>

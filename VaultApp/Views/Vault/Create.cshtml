@@ -1,5 +1,8 @@
 @model VaultEntryViewModel
-@{ ViewData["Title"] = "New Entry"; }
+@{
+    ViewData["Title"] = "New Entry"; 
+    Model.Notes ??= string.Empty;
+}
 
 <div class="form-page">
     <div class="form-card">
