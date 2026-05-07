@@ -117,11 +117,17 @@ public class ShareViewModel
 {
     public int    VaultEntryId   { get; set; }
     public string SiteName       { get; set; } = "";
-    public List<string> SharedWithEmails { get; set; } = new();
+    public List<ShareRecipientViewModel> SharedWith { get; set; } = new();
 
     [Required, EmailAddress]
     [Display(Name = "Recipient Email")]
     public string RecipientEmail { get; set; } = "";
+}
+
+public class ShareRecipientViewModel
+{
+    public int SharedEntryId { get; set; }
+    public string Email { get; set; } = "";
 }
 
 public class DecryptedVaultEntry

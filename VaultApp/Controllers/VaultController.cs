@@ -99,7 +99,7 @@ public class VaultController : Controller
         {
             VaultEntryId = id,
             SiteName = entry.Entry.SiteName,
-            SharedWithEmails = await _vault.GetSharedRecipientsAsync(id, UserId)
+            SharedWith = await _vault.GetSharedRecipientsAsync(id, UserId)
         };
         return View(model);
     }
@@ -107,7 +107,7 @@ public class VaultController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Share(ShareViewModel model)
     {
-        model.SharedWithEmails = await _vault.GetSharedRecipientsAsync(model.VaultEntryId, UserId);
+        model.SharedWith = await _vault.GetSharedRecipientsAsync(model.VaultEntryId, UserId);
         if (!ModelState.IsValid) return View(model);
         if (EncKey is null) return RequireKey();
 
@@ -117,11 +117,21 @@ public class VaultController : Controller
         if (!ok)
         {
             ModelState.AddModelError("", error);
-            model.SharedWithEmails = await _vault.GetSharedRecipientsAsync(model.VaultEntryId, UserId);
+            model.SharedWith = await _vault.GetSharedRecipientsAsync(model.VaultEntryId, UserId);
             return View(model);
         }
 
         TempData["Success"] = $"Entry shared with {model.RecipientEmail}.";
         return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Unshare(int vaultEntryId, int sharedEntryId)
+    {
+        var removed = await _vault.UnshareAsync(sharedEntryId, UserId);
+        TempData[removed ? "Success" : "Error"] = removed
+            ? "Sharing removed."
+            : "Unable to remove sharing.";
+        return RedirectToAction(nameof(Share), new { id = vaultEntryId });
     }
 }

@@ -18,16 +18,22 @@
 
         <div class="share-existing">
             <h2>Already shared with</h2>
-            @if (Model.SharedWithEmails.Count == 0)
+            @if (Model.SharedWith.Count == 0)
             {
                 <p class="share-existing-empty">No users yet.</p>
             }
             else
             {
                 <div class="share-existing-list">
-                    @foreach (var email in Model.SharedWithEmails)
+                    @foreach (var recipient in Model.SharedWith)
                     {
-                        <span class="share-existing-item">@email</span>
+                        <form asp-action="Unshare" method="post" class="share-existing-item">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="vaultEntryId" value="@Model.VaultEntryId" />
+                            <input type="hidden" name="sharedEntryId" value="@recipient.SharedEntryId" />
+                            <span>@recipient.Email</span>
+                            <button type="submit" class="share-remove-btn" aria-label="Remove sharing for @recipient.Email" title="Remove sharing">×</button>
+                        </form>
                     }
                 </div>
             }

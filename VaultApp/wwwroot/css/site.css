@@ -343,12 +343,27 @@ body {
   gap: .45rem;
 }
 .share-existing-item {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
   font-size: .8rem;
   color: var(--text);
   background: var(--bg2);
   border: 1px solid var(--border2);
   border-radius: 999px;
   padding: .2rem .6rem;
+}
+.share-remove-btn {
+  border: none;
+  background: none;
+  color: var(--text3);
+  font-size: .9rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+.share-remove-btn:hover {
+  color: var(--danger);
 }
 
 /* ── Confirmation modal ─────────────────────────────────────────────────────── */

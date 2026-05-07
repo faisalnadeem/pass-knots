@@ -14,7 +14,8 @@ public interface IVaultService
     Task                            DeleteAsync(int id, string userId);
     Task<(bool ok, string error)>   ShareAsync(int entryId, string ownerId, string ownerKey, string recipientEmail);
     Task<List<DecryptedVaultEntry>> GetSharedWithMeAsync(string userId, string encKey);
-    Task<List<string>>              GetSharedRecipientsAsync(int entryId, string ownerId);
+    Task<List<ShareRecipientViewModel>> GetSharedRecipientsAsync(int entryId, string ownerId);
+    Task<bool>                      UnshareAsync(int sharedEntryId, string ownerId);
 }
 
 public class VaultService : IVaultService
@@ -180,16 +181,38 @@ public class VaultService : IVaultService
         }).ToList();
     }
 
-    public async Task<List<string>> GetSharedRecipientsAsync(int entryId, string ownerId)
+    public async Task<List<ShareRecipientViewModel>> GetSharedRecipientsAsync(int entryId, string ownerId)
     {
-        return await _db.SharedEntries
+        var shares = await _db.SharedEntries
             .Include(s => s.VaultEntry)
             .Include(s => s.SharedWithUser)
             .Where(s => s.VaultEntryId == entryId && s.VaultEntry!.OwnerId == ownerId)
-            .Select(s => s.SharedWithUser!.Email ?? "")
-            .Where(email => email != "")
-            .OrderBy(email => email)
             .ToListAsync();
+
+        return shares
+            .GroupBy(s => s.SharedWithUserId)
+            .Select(g => g.OrderByDescending(x => x.SharedAt).First())
+            .Where(s => !string.IsNullOrWhiteSpace(s.SharedWithUser!.Email))
+            .OrderBy(s => s.SharedWithUser!.Email)
+            .Select(s => new ShareRecipientViewModel
+            {
+                SharedEntryId = s.Id,
+                Email = s.SharedWithUser!.Email!
+            })
+            .ToList();
+    }
+
+    public async Task<bool> UnshareAsync(int sharedEntryId, string ownerId)
+    {
+        var share = await _db.SharedEntries
+            .Include(s => s.VaultEntry)
+            .FirstOrDefaultAsync(s => s.Id == sharedEntryId && s.VaultEntry!.OwnerId == ownerId);
+
+        if (share is null) return false;
+
+        _db.SharedEntries.Remove(share);
+        await _db.SaveChangesAsync();
+        return true;
     }
 
     private string SafeDecrypt(string cipher, string iv, string key)
