@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using VaultApp.Data;
 using VaultApp.Models;
 
@@ -20,11 +21,13 @@ public class VaultService : IVaultService
 {
     private readonly ApplicationDbContext _db;
     private readonly IEncryptionService   _enc;
+    private readonly string               _shareSecret;
 
-    public VaultService(ApplicationDbContext db, IEncryptionService enc)
+    public VaultService(ApplicationDbContext db, IEncryptionService enc, IConfiguration config)
     {
         _db  = db;
         _enc = enc;
+        _shareSecret = config["Security:ShareKey"] ?? "VaultApp-Share-Key-Change-In-Production";
     }
 
     public async Task<List<DecryptedVaultEntry>> GetEntriesAsync(string userId, string encKey)
@@ -115,53 +118,48 @@ public class VaultService : IVaultService
         if (recipient is null) return (false, "No user found with that email.");
         if (recipient.Id == ownerId) return (false, "You cannot share with yourself.");
 
-        // Check not already shared
-        bool alreadyShared = await _db.SharedEntries.AnyAsync(
-            s => s.VaultEntryId == entryId && s.SharedWithUserId == recipient.Id);
-        if (alreadyShared) return (false, "Already shared with this user.");
-
-        // Decrypt the plaintext password with owner's key, then re-encrypt with recipient's
-        // deterministic derived key (recipient must supply their key to decrypt later).
-        // We store ciphertext encrypted with RECIPIENT's key so only they can read it.
+        // Decrypt with owner's key, then create a share copy scoped to recipient identity.
         string plainPwd = _enc.Decrypt(entry.EncryptedPassword, entry.IV, ownerKey);
-        var (recipCipher, recipIv) = _enc.Encrypt(plainPwd, recipient.EncryptionKeyHash ?? "");
+        var (shareCipher, shareIv) = _enc.Encrypt(plainPwd, BuildShareKey(recipient.Id));
 
-        // We can't encrypt with the recipient's actual key (we don't know it).
-        // Instead store a copy of the ciphertext re-encrypted under a shared-entry-specific
-        // approach: encrypt with the OWNER's key and record it — recipient downloads and
-        // the owner's key version is what's stored. The recipient must request the owner
-        // to reveal, OR we use a simpler UX: store plaintext re-encrypted with recipient's
-        // KEY HASH as a stand-in. 
-        //
-        // Proper zero-knowledge sharing requires the recipient's public key.
-        // For this app we use a pragmatic approach: the shared copy is encrypted with the
-        // owner's key; when the recipient views it they see the site/username but must ask
-        // the owner for the actual password reveal via the owner decrypting for them.
-        // OR — simpler and honest — we store it encrypted with the owner's key and display
-        // a note that the entry was shared (recipient can see metadata, not password, unless
-        // the owner re-encrypts for them with a session token).
-        //
-        // IMPLEMENTATION CHOICE: Store the password re-encrypted specifically so the
-        // *owner*'s session is used to produce a shareable copy. We'll flag this clearly in UI.
-        var (shareCipher, shareIv) = _enc.Encrypt(plainPwd, ownerKey + ":shared:" + recipient.Id);
+        // If a share already exists, refresh it so legacy/non-decryptable records get repaired.
+        var existingShares = await _db.SharedEntries
+            .Where(s => s.VaultEntryId == entryId && s.SharedWithUserId == recipient.Id)
+            .OrderByDescending(s => s.SharedAt)
+            .ToListAsync();
 
-        var share = new SharedEntry
+        if (existingShares.Count == 0)
         {
-            VaultEntryId      = entryId,
-            SharedWithUserId  = recipient.Id,
-            ReEncryptedKey    = shareCipher,
-            ReEncryptedIV     = shareIv,
-            SharedAt          = DateTime.UtcNow
-        };
-        _db.SharedEntries.Add(share);
+            var share = new SharedEntry
+            {
+                VaultEntryId      = entryId,
+                SharedWithUserId  = recipient.Id,
+                ReEncryptedKey    = shareCipher,
+                ReEncryptedIV     = shareIv,
+                SharedAt          = DateTime.UtcNow
+            };
+            _db.SharedEntries.Add(share);
+        }
+        else
+        {
+            var latestShare = existingShares[0];
+            latestShare.ReEncryptedKey = shareCipher;
+            latestShare.ReEncryptedIV  = shareIv;
+            latestShare.SharedAt       = DateTime.UtcNow;
+
+            // Keep one record per entry+recipient and drop older duplicates.
+            if (existingShares.Count > 1)
+            {
+                _db.SharedEntries.RemoveRange(existingShares.Skip(1));
+            }
+        }
+
         await _db.SaveChangesAsync();
         return (true, "");
     }
 
     public async Task<List<DecryptedVaultEntry>> GetSharedWithMeAsync(string userId, string encKey)
     {
-        // For shared entries the password cannot be decrypted without the owner's key.
-        // We return the entry metadata and mark PlainPassword as "[Protected — contact owner]"
         var shared = await _db.SharedEntries
             .Include(s => s.VaultEntry)
             .ThenInclude(v => v!.Owner)
@@ -169,10 +167,15 @@ public class VaultService : IVaultService
             .OrderByDescending(s => s.SharedAt)
             .ToListAsync();
 
-        return shared.Select(s => new DecryptedVaultEntry
+        var latestPerEntry = shared
+            .GroupBy(s => s.VaultEntryId)
+            .Select(g => g.OrderByDescending(x => x.SharedAt).First())
+            .ToList();
+
+        return latestPerEntry.Select(s => new DecryptedVaultEntry
         {
             Entry         = s.VaultEntry!,
-            PlainPassword = "[Contact entry owner to reveal password]",
+            PlainPassword = SafeDecryptShared(s.ReEncryptedKey, s.ReEncryptedIV, userId),
             IsShared      = true
         }).ToList();
     }
@@ -194,4 +197,17 @@ public class VaultService : IVaultService
         try   { return _enc.Decrypt(cipher, iv, key); }
         catch { return "[Decryption failed — wrong key?]"; }
     }
+
+    private string SafeDecryptShared(string cipher, string iv, string userId)
+    {
+        // v2: server-scoped share key + recipient id
+        try { return _enc.Decrypt(cipher, iv, BuildShareKey(userId)); } catch { }
+
+        // backward-compat for earlier attempt where recipient id only was used
+        try { return _enc.Decrypt(cipher, iv, userId); } catch { }
+
+        return "[Decryption failed — wrong key?]";
+    }
+
+    private string BuildShareKey(string userId) => $"{_shareSecret}:{userId}";
 }

@@ -113,7 +113,10 @@
                         </div>
                         <div class="entry-field">
                             <span class="entry-label">Password</span>
-                            <span class="entry-value entry-shared-pw">@item.PlainPassword</span>
+                            <div class="password-reveal">
+                                <span class="entry-value password-mask" id="shared-pw-@item.Entry.Id">••••••••••••</span>
+                                <button class="btn-reveal" data-password="@item.PlainPassword" data-target="shared-pw-@item.Entry.Id">Show</button>
+                            </div>
                         </div>
                     </div>
                 }
