@@ -68,7 +68,7 @@ public class VaultService : IVaultService
             Username          = vm.Username,
             EncryptedPassword = cipher,
             IV                = iv,
-            Notes             = vm.Notes,
+            Notes             = vm.Notes ?? "",
             CreatedAt         = DateTime.UtcNow,
             UpdatedAt         = DateTime.UtcNow
         };
@@ -89,7 +89,7 @@ public class VaultService : IVaultService
         entry.Username          = vm.Username;
         entry.EncryptedPassword = cipher;
         entry.IV                = iv;
-        entry.Notes             = vm.Notes;
+        entry.Notes             = vm.Notes ?? "";
         entry.UpdatedAt         = DateTime.UtcNow;
         await _db.SaveChangesAsync();
     }

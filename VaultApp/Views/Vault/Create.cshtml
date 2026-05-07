@@ -23,7 +23,7 @@
 
             <div class="field-group">
                 <label asp-for="SiteUrl">Site URL <span class="optional">(optional)</span></label>
-                <input asp-for="SiteUrl" type="url" placeholder="https://github.com" />
+                <input asp-for="SiteUrl" type="text" inputmode="url" placeholder="https://github.com or www.github.com" />
                 <span asp-validation-for="SiteUrl" class="field-error"></span>
             </div>
 

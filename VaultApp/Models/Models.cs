@@ -99,7 +99,7 @@ public class VaultEntryViewModel
     [Display(Name = "Site / App Name")]
     public string SiteName { get; set; } = "";
 
-    [MaxLength(200), Url]
+    [MaxLength(200)]
     [Display(Name = "Site URL (optional)")]
     public string? SiteUrl { get; set; }
 

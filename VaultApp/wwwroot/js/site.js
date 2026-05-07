@@ -38,3 +38,43 @@ if (genBtn) {
         }
     });
 }
+
+// ── Delete confirmation modal ─────────────────────────────────────────────────
+const deleteModal = document.getElementById('delete-confirm-modal');
+const deleteConfirmBtn = document.getElementById('delete-confirm-btn');
+const deleteCancelBtn = document.getElementById('delete-cancel-btn');
+const deleteMessage = document.getElementById('delete-modal-message');
+let pendingDeleteForm = null;
+
+function closeDeleteModal() {
+    if (!deleteModal) return;
+    deleteModal.hidden = true;
+    pendingDeleteForm = null;
+}
+
+if (deleteModal && deleteConfirmBtn && deleteCancelBtn && deleteMessage) {
+    document.querySelectorAll('.delete-entry-form').forEach(form => {
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            pendingDeleteForm = form;
+
+            const entryName = form.dataset.entryName || 'this entry';
+            deleteMessage.textContent = `Are you sure you want to delete "${entryName}"? This action cannot be undone.`;
+            deleteModal.hidden = false;
+        });
+    });
+
+    deleteConfirmBtn.addEventListener('click', () => {
+        if (pendingDeleteForm) pendingDeleteForm.submit();
+    });
+
+    deleteCancelBtn.addEventListener('click', closeDeleteModal);
+
+    deleteModal.addEventListener('click', e => {
+        if (e.target === deleteModal) closeDeleteModal();
+    });
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !deleteModal.hidden) closeDeleteModal();
+    });
+}
