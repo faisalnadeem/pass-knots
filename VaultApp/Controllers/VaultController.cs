@@ -111,7 +111,7 @@ public class VaultController : Controller
         if (!ModelState.IsValid) return View(model);
         if (EncKey is null) return RequireKey();
 
-        var (ok, error) = await _vault.ShareAsync(
+        var (ok, error, pendingInvite) = await _vault.ShareAsync(
             model.VaultEntryId, UserId, EncKey, model.RecipientEmail);
 
         if (!ok)
@@ -121,7 +121,9 @@ public class VaultController : Controller
             return View(model);
         }
 
-        TempData["Success"] = $"Entry shared with {model.RecipientEmail}.";
+        TempData["Success"] = pendingInvite
+            ? "This entry has been shared with the user. It will be visible once they approve the request through the email sent to them."
+            : $"Entry shared with {model.RecipientEmail}.";
         return RedirectToAction(nameof(Index));
     }
 

@@ -11,6 +11,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<VaultEntry>   VaultEntries  { get; set; }
     public DbSet<SharedEntry>  SharedEntries { get; set; }
+    public DbSet<PendingShare> PendingShares { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -33,5 +34,15 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .WithMany()
             .HasForeignKey(s => s.SharedWithUserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<PendingShare>()
+            .HasOne(p => p.VaultEntry)
+            .WithMany()
+            .HasForeignKey(p => p.VaultEntryId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<PendingShare>()
+            .HasIndex(p => new { p.VaultEntryId, p.RecipientEmail })
+            .IsUnique();
     }
 }

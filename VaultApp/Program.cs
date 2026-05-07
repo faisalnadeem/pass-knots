@@ -57,7 +57,10 @@ builder.Services.AddSession(o =>
 
 // ── App services ──────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IEncryptionService, EncryptionService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IVaultService, VaultService>();
+builder.Services.AddSingleton<IShareInviteQueue, ShareInviteQueue>();
+builder.Services.AddHostedService<ShareInviteWorker>();
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();

@@ -78,3 +78,11 @@ if (deleteModal && deleteConfirmBtn && deleteCancelBtn && deleteMessage) {
         if (e.key === 'Escape' && !deleteModal.hidden) closeDeleteModal();
     });
 }
+
+// ── Auto-dismiss alerts ───────────────────────────────────────────────────────
+document.querySelectorAll('.alert').forEach(alert => {
+    setTimeout(() => {
+        alert.classList.add('fade-out');
+        setTimeout(() => alert.remove(), 350);
+    }, 3000);
+});

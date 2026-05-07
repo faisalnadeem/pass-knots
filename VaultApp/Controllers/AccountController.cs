@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using VaultApp.Models;
 using VaultApp.Services;
@@ -7,18 +8,25 @@ namespace VaultApp.Controllers;
 
 public class AccountController : Controller
 {
+    private const string EncKeyCookieName = "VaultApp.EncKey";
     private readonly UserManager<ApplicationUser>   _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IEncryptionService             _enc;
+    private readonly IVaultService                  _vault;
+    private readonly IDataProtector                 _encKeyProtector;
 
     public AccountController(
         UserManager<ApplicationUser>   userManager,
         SignInManager<ApplicationUser> signInManager,
-        IEncryptionService             enc)
+        IEncryptionService             enc,
+        IVaultService                  vault,
+        IDataProtectionProvider        dataProtectionProvider)
     {
         _userManager   = userManager;
         _signInManager = signInManager;
         _enc           = enc;
+        _vault         = vault;
+        _encKeyProtector = dataProtectionProvider.CreateProtector("VaultApp.EncKeyCookie.v1");
     }
 
     // ── Register ──────────────────────────────────────────────────────────────
@@ -42,6 +50,11 @@ public class AccountController : Controller
             await _signInManager.SignInAsync(user, isPersistent: false);
             // Store encryption key in session (never persisted to DB in plaintext)
             HttpContext.Session.SetString("EncKey", model.EncryptionKey);
+            WriteEncKeyCookie(model.EncryptionKey, false);
+            if (!string.IsNullOrWhiteSpace(user.Email))
+            {
+                await _vault.ClaimPendingSharesAsync(user.Id, user.Email);
+            }
             return RedirectToAction("Index", "Vault");
         }
 
@@ -85,6 +98,11 @@ public class AccountController : Controller
         if (result.Succeeded)
         {
             HttpContext.Session.SetString("EncKey", model.EncryptionKey);
+            WriteEncKeyCookie(model.EncryptionKey, model.RememberMe);
+            if (!string.IsNullOrWhiteSpace(user.Email))
+            {
+                await _vault.ClaimPendingSharesAsync(user.Id, user.Email);
+            }
             return LocalRedirect(returnUrl ?? "/Vault");
         }
         if (result.IsLockedOut)
@@ -102,7 +120,27 @@ public class AccountController : Controller
     public async Task<IActionResult> Logout()
     {
         HttpContext.Session.Clear();
+        Response.Cookies.Delete(EncKeyCookieName);
         await _signInManager.SignOutAsync();
         return RedirectToAction("Index", "Home");
+    }
+
+    private void WriteEncKeyCookie(string encKey, bool isPersistent)
+    {
+        var protectedValue = _encKeyProtector.Protect(encKey);
+        var options = new CookieOptions
+        {
+            HttpOnly = true,
+            IsEssential = true,
+            SameSite = SameSiteMode.Lax,
+            Secure = HttpContext.Request.IsHttps
+        };
+
+        if (isPersistent)
+        {
+            options.Expires = DateTimeOffset.UtcNow.AddDays(30);
+        }
+
+        Response.Cookies.Append(EncKeyCookieName, protectedValue, options);
     }
 }

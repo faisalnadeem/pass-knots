@@ -12,23 +12,33 @@ public interface IVaultService
     Task<VaultEntry>                CreateAsync(VaultEntryViewModel vm, string userId, string encKey);
     Task                            UpdateAsync(VaultEntryViewModel vm, string userId, string encKey);
     Task                            DeleteAsync(int id, string userId);
-    Task<(bool ok, string error)>   ShareAsync(int entryId, string ownerId, string ownerKey, string recipientEmail);
+    Task<(bool ok, string error, bool pendingInvite)> ShareAsync(int entryId, string ownerId, string ownerKey, string recipientEmail);
     Task<List<DecryptedVaultEntry>> GetSharedWithMeAsync(string userId, string encKey);
     Task<List<ShareRecipientViewModel>> GetSharedRecipientsAsync(int entryId, string ownerId);
     Task<bool>                      UnshareAsync(int sharedEntryId, string ownerId);
+    Task ClaimPendingSharesAsync(string userId, string email);
 }
 
 public class VaultService : IVaultService
 {
     private readonly ApplicationDbContext _db;
     private readonly IEncryptionService   _enc;
+    private readonly IShareInviteQueue    _inviteQueue;
     private readonly string               _shareSecret;
+    private readonly string               _baseUrl;
+    private bool                          _pendingShareSchemaEnsured;
 
-    public VaultService(ApplicationDbContext db, IEncryptionService enc, IConfiguration config)
+    public VaultService(
+        ApplicationDbContext db,
+        IEncryptionService enc,
+        IShareInviteQueue inviteQueue,
+        IConfiguration config)
     {
         _db  = db;
         _enc = enc;
+        _inviteQueue = inviteQueue;
         _shareSecret = config["Security:ShareKey"] ?? "VaultApp-Share-Key-Change-In-Production";
+        _baseUrl = config["App:BaseUrl"] ?? "https://localhost:5001";
     }
 
     public async Task<List<DecryptedVaultEntry>> GetEntriesAsync(string userId, string encKey)
@@ -108,19 +118,57 @@ public class VaultService : IVaultService
         await _db.SaveChangesAsync();
     }
 
-    public async Task<(bool ok, string error)> ShareAsync(
+    public async Task<(bool ok, string error, bool pendingInvite)> ShareAsync(
         int entryId, string ownerId, string ownerKey, string recipientEmail)
     {
+        await EnsurePendingShareSchemaAsync();
+
         var entry = await _db.VaultEntries
             .FirstOrDefaultAsync(e => e.Id == entryId && e.OwnerId == ownerId);
-        if (entry is null) return (false, "Entry not found.");
+        if (entry is null) return (false, "Entry not found.", false);
 
-        var recipient = await _db.Users.FirstOrDefaultAsync(u => u.Email == recipientEmail);
-        if (recipient is null) return (false, "No user found with that email.");
-        if (recipient.Id == ownerId) return (false, "You cannot share with yourself.");
+        var normalizedEmail = (recipientEmail ?? "").Trim().ToLowerInvariant();
+        var owner = await _db.Users.FirstOrDefaultAsync(u => u.Id == ownerId);
+        var recipient = await _db.Users.FirstOrDefaultAsync(
+            u => u.Email != null && u.Email.ToLower() == normalizedEmail);
 
-        // Decrypt with owner's key, then create a share copy scoped to recipient identity.
         string plainPwd = _enc.Decrypt(entry.EncryptedPassword, entry.IV, ownerKey);
+        if (recipient is null)
+        {
+            // Queue pending share for this email and invite recipient to sign up.
+            var (pendingCipher, pendingIv) = _enc.Encrypt(plainPwd, BuildPendingShareKey(normalizedEmail));
+            var existingPending = await _db.PendingShares.FirstOrDefaultAsync(
+                p => p.VaultEntryId == entryId && p.RecipientEmail == normalizedEmail);
+
+            if (existingPending is null)
+            {
+                _db.PendingShares.Add(new PendingShare
+                {
+                    VaultEntryId = entryId,
+                    RecipientEmail = normalizedEmail,
+                    EncryptedPassword = pendingCipher,
+                    IV = pendingIv,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+            else
+            {
+                existingPending.EncryptedPassword = pendingCipher;
+                existingPending.IV = pendingIv;
+                existingPending.CreatedAt = DateTime.UtcNow;
+            }
+
+            await _db.SaveChangesAsync();
+            var signupLink = $"{_baseUrl.TrimEnd('/')}/Account/Register";
+            await _inviteQueue.EnqueueAsync(new ShareInviteMessage(
+                normalizedEmail,
+                owner?.Email ?? "A PassKnots user",
+                entry.SiteName,
+                signupLink));
+            return (true, "", true);
+        }
+
+        if (recipient.Id == ownerId) return (false, "You cannot share with yourself.", false);
         var (shareCipher, shareIv) = _enc.Encrypt(plainPwd, BuildShareKey(recipient.Id));
 
         // If a share already exists, refresh it so legacy/non-decryptable records get repaired.
@@ -156,7 +204,7 @@ public class VaultService : IVaultService
         }
 
         await _db.SaveChangesAsync();
-        return (true, "");
+        return (true, "", false);
     }
 
     public async Task<List<DecryptedVaultEntry>> GetSharedWithMeAsync(string userId, string encKey)
@@ -215,6 +263,62 @@ public class VaultService : IVaultService
         return true;
     }
 
+    public async Task ClaimPendingSharesAsync(string userId, string email)
+    {
+        await EnsurePendingShareSchemaAsync();
+
+        var normalizedEmail = (email ?? "").Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(normalizedEmail)) return;
+
+        var pendingShares = await _db.PendingShares
+            .Include(p => p.VaultEntry)
+            .Where(p => p.RecipientEmail == normalizedEmail)
+            .ToListAsync();
+
+        foreach (var pending in pendingShares)
+        {
+            if (pending.VaultEntry is null) continue;
+
+            var plain = SafeDecrypt(pending.EncryptedPassword, pending.IV, BuildPendingShareKey(normalizedEmail));
+            if (plain.StartsWith("[Decryption failed", StringComparison.Ordinal)) continue;
+
+            var (shareCipher, shareIv) = _enc.Encrypt(plain, BuildShareKey(userId));
+            var existingShares = await _db.SharedEntries
+                .Where(s => s.VaultEntryId == pending.VaultEntryId && s.SharedWithUserId == userId)
+                .OrderByDescending(s => s.SharedAt)
+                .ToListAsync();
+
+            if (existingShares.Count == 0)
+            {
+                _db.SharedEntries.Add(new SharedEntry
+                {
+                    VaultEntryId = pending.VaultEntryId,
+                    SharedWithUserId = userId,
+                    ReEncryptedKey = shareCipher,
+                    ReEncryptedIV = shareIv,
+                    SharedAt = DateTime.UtcNow
+                });
+            }
+            else
+            {
+                var latest = existingShares[0];
+                latest.ReEncryptedKey = shareCipher;
+                latest.ReEncryptedIV = shareIv;
+                latest.SharedAt = DateTime.UtcNow;
+                if (existingShares.Count > 1)
+                {
+                    _db.SharedEntries.RemoveRange(existingShares.Skip(1));
+                }
+            }
+        }
+
+        if (pendingShares.Count > 0)
+        {
+            _db.PendingShares.RemoveRange(pendingShares);
+            await _db.SaveChangesAsync();
+        }
+    }
+
     private string SafeDecrypt(string cipher, string iv, string key)
     {
         try   { return _enc.Decrypt(cipher, iv, key); }
@@ -233,4 +337,31 @@ public class VaultService : IVaultService
     }
 
     private string BuildShareKey(string userId) => $"{_shareSecret}:{userId}";
+    private string BuildPendingShareKey(string email) => $"{_shareSecret}:pending:{email}";
+
+    private async Task EnsurePendingShareSchemaAsync()
+    {
+        if (_pendingShareSchemaEnsured) return;
+
+        const string sql = """
+IF OBJECT_ID('dbo.PendingShares', 'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[PendingShares](
+        [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        [VaultEntryId] INT NOT NULL,
+        [RecipientEmail] NVARCHAR(256) NOT NULL,
+        [EncryptedPassword] NVARCHAR(MAX) NOT NULL,
+        [IV] NVARCHAR(MAX) NOT NULL,
+        [CreatedAt] DATETIME2 NOT NULL,
+        CONSTRAINT [FK_PendingShares_VaultEntries_VaultEntryId]
+            FOREIGN KEY([VaultEntryId]) REFERENCES [dbo].[VaultEntries]([Id]) ON DELETE CASCADE
+    );
+    CREATE UNIQUE INDEX [IX_PendingShares_VaultEntryId_RecipientEmail]
+        ON [dbo].[PendingShares] ([VaultEntryId], [RecipientEmail]);
+END
+""";
+
+        await _db.Database.ExecuteSqlRawAsync(sql);
+        _pendingShareSchemaEnsured = true;
+    }
 }

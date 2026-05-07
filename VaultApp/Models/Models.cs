@@ -53,6 +53,21 @@ public class SharedEntry
     public DateTime SharedAt { get; set; } = DateTime.UtcNow;
 }
 
+public class PendingShare
+{
+    public int Id { get; set; }
+
+    public int VaultEntryId { get; set; }
+    public VaultEntry? VaultEntry { get; set; }
+
+    [Required, EmailAddress, MaxLength(256)]
+    public string RecipientEmail { get; set; } = "";
+
+    public string EncryptedPassword { get; set; } = "";
+    public string IV { get; set; } = "";
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
 // ── View-models ───────────────────────────────────────────────────────────────
 public class RegisterViewModel
 {
