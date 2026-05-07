@@ -16,6 +16,23 @@
             </div>
         </div>
 
+        <div class="share-existing">
+            <h2>Already shared with</h2>
+            @if (Model.SharedWithEmails.Count == 0)
+            {
+                <p class="share-existing-empty">No users yet.</p>
+            }
+            else
+            {
+                <div class="share-existing-list">
+                    @foreach (var email in Model.SharedWithEmails)
+                    {
+                        <span class="share-existing-item">@email</span>
+                    }
+                </div>
+            }
+        </div>
+
         <form asp-action="Share" method="post">
             @Html.AntiForgeryToken()
             <input asp-for="VaultEntryId" type="hidden" />

@@ -321,6 +321,35 @@ body {
 .share-info-icon { font-size: 1.5rem; flex-shrink: 0; }
 .share-info strong { display: block; margin-bottom: .3rem; }
 .share-info p { font-size: .85rem; color: var(--text2); line-height: 1.5; }
+.share-existing {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.2rem;
+}
+.share-existing h2 {
+  font-size: .9rem;
+  color: var(--text2);
+  margin-bottom: .6rem;
+}
+.share-existing-empty {
+  font-size: .85rem;
+  color: var(--text3);
+}
+.share-existing-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem;
+}
+.share-existing-item {
+  font-size: .8rem;
+  color: var(--text);
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 999px;
+  padding: .2rem .6rem;
+}
 
 /* ── Confirmation modal ─────────────────────────────────────────────────────── */
 .confirm-modal-backdrop {

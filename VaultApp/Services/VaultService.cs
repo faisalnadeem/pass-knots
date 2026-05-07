@@ -13,6 +13,7 @@ public interface IVaultService
     Task                            DeleteAsync(int id, string userId);
     Task<(bool ok, string error)>   ShareAsync(int entryId, string ownerId, string ownerKey, string recipientEmail);
     Task<List<DecryptedVaultEntry>> GetSharedWithMeAsync(string userId, string encKey);
+    Task<List<string>>              GetSharedRecipientsAsync(int entryId, string ownerId);
 }
 
 public class VaultService : IVaultService
@@ -174,6 +175,18 @@ public class VaultService : IVaultService
             PlainPassword = "[Contact entry owner to reveal password]",
             IsShared      = true
         }).ToList();
+    }
+
+    public async Task<List<string>> GetSharedRecipientsAsync(int entryId, string ownerId)
+    {
+        return await _db.SharedEntries
+            .Include(s => s.VaultEntry)
+            .Include(s => s.SharedWithUser)
+            .Where(s => s.VaultEntryId == entryId && s.VaultEntry!.OwnerId == ownerId)
+            .Select(s => s.SharedWithUser!.Email ?? "")
+            .Where(email => email != "")
+            .OrderBy(email => email)
+            .ToListAsync();
     }
 
     private string SafeDecrypt(string cipher, string iv, string key)

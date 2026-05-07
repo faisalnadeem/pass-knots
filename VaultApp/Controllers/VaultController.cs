@@ -95,12 +95,19 @@ public class VaultController : Controller
         if (EncKey is null) return RequireKey();
         var entry = await _vault.GetEntryAsync(id, UserId, EncKey);
         if (entry is null) return NotFound();
-        return View(new ShareViewModel { VaultEntryId = id, SiteName = entry.Entry.SiteName });
+        var model = new ShareViewModel
+        {
+            VaultEntryId = id,
+            SiteName = entry.Entry.SiteName,
+            SharedWithEmails = await _vault.GetSharedRecipientsAsync(id, UserId)
+        };
+        return View(model);
     }
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Share(ShareViewModel model)
     {
+        model.SharedWithEmails = await _vault.GetSharedRecipientsAsync(model.VaultEntryId, UserId);
         if (!ModelState.IsValid) return View(model);
         if (EncKey is null) return RequireKey();
 
@@ -110,6 +117,7 @@ public class VaultController : Controller
         if (!ok)
         {
             ModelState.AddModelError("", error);
+            model.SharedWithEmails = await _vault.GetSharedRecipientsAsync(model.VaultEntryId, UserId);
             return View(model);
         }
 

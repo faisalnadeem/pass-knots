@@ -117,6 +117,7 @@ public class ShareViewModel
 {
     public int    VaultEntryId   { get; set; }
     public string SiteName       { get; set; } = "";
+    public List<string> SharedWithEmails { get; set; } = new();
 
     [Required, EmailAddress]
     [Display(Name = "Recipient Email")]
