@@ -51,7 +51,8 @@
                              data-site-url="@item.Entry.SiteUrl"
                              data-username="@item.Entry.Username"
                              data-password="@item.PlainPassword"
-                             data-notes="@item.Entry.Notes">
+                         data-notes="@item.Entry.Notes"
+                         data-shared-emails="@string.Join("||", item.Entry.SharedWith.Where(s => s.SharedWithUser != null && !string.IsNullOrWhiteSpace(s.SharedWithUser.Email)).Select(s => s.SharedWithUser!.Email).Distinct())">
                             <div class="entry-card-header">
                                 <div class="entry-site-info">
                                     <div class="entry-favicon">
@@ -123,7 +124,8 @@
                              data-site-url="@item.Entry.SiteUrl"
                              data-username="@item.Entry.Username"
                              data-password="@item.PlainPassword"
-                             data-notes="@item.Entry.Notes">
+                             data-notes="@item.Entry.Notes"
+                             data-shared-emails="">
                             <div class="shared-badge">Shared</div>
                             <div class="entry-card-header">
                                 <div class="entry-site-info">
@@ -178,7 +180,8 @@
                              data-site-url="@item.Entry.SiteUrl"
                              data-username="@item.Entry.Username"
                              data-password="@item.PlainPassword"
-                             data-notes="@item.Entry.Notes">
+                             data-notes="@item.Entry.Notes"
+                             data-shared-emails="@string.Join("||", item.Entry.SharedWith.Where(s => s.SharedWithUser != null && !string.IsNullOrWhiteSpace(s.SharedWithUser.Email)).Select(s => s.SharedWithUser!.Email).Distinct())">
                             <div class="entry-list-main">
                                 <div class="entry-favicon">
                                     @(item.Entry.SiteName.Length > 0 ? item.Entry.SiteName[0].ToString().ToUpper() : "?")
@@ -220,7 +223,8 @@
                              data-site-url="@item.Entry.SiteUrl"
                              data-username="@item.Entry.Username"
                              data-password="@item.PlainPassword"
-                             data-notes="@item.Entry.Notes">
+                             data-notes="@item.Entry.Notes"
+                             data-shared-emails="">
                             <div class="entry-list-main">
                                 <div class="entry-favicon entry-favicon-shared">
                                     @(item.Entry.SiteName.Length > 0 ? item.Entry.SiteName[0].ToString().ToUpper() : "?")
@@ -270,33 +274,44 @@
             <button type="button" class="btn-close-modal" id="entry-details-close" aria-label="Close details popup">×</button>
         </div>
 
-        <div class="entry-details-body">
-            <div class="entry-field">
-                <span class="entry-label">Site / App Name</span>
-                <span class="entry-value" id="details-site-name">-</span>
-            </div>
+        <div class="entry-details-body entry-details-layout">
+            <div>
+                <div class="entry-field">
+                    <span class="entry-label">Site / App Name</span>
+                    <span class="entry-value" id="details-site-name">-</span>
+                </div>
 
-            <div class="entry-field">
-                <span class="entry-label">Site URL</span>
-                <a id="details-site-url" class="entry-url details-url" href="#" target="_blank" rel="noopener noreferrer">-</a>
-            </div>
+                <div class="entry-field">
+                    <span class="entry-label">Site URL</span>
+                    <a id="details-site-url" class="entry-url details-url" href="#" target="_blank" rel="noopener noreferrer">-</a>
+                </div>
 
-            <div class="entry-field">
-                <span class="entry-label">Username / Email</span>
-                <span class="entry-value" id="details-username">-</span>
-            </div>
+                <div class="entry-field">
+                    <span class="entry-label">Username / Email</span>
+                    <span class="entry-value" id="details-username">-</span>
+                </div>
 
-            <div class="entry-field">
-                <span class="entry-label">Password</span>
-                <div class="password-reveal">
-                    <span class="entry-value password-mask" id="details-password">••••••••••••</span>
-                    <button type="button" class="btn-reveal" id="details-password-toggle">Show</button>
+                <div class="entry-field">
+                    <span class="entry-label">Password</span>
+                    <div class="password-reveal">
+                        <span class="entry-value password-mask" id="details-password">••••••••••••</span>
+                        <button type="button" class="btn-reveal" id="details-password-toggle">Show</button>
+                    </div>
+                </div>
+
+                <div class="entry-field">
+                    <span class="entry-label">Notes</span>
+                    <span class="entry-value entry-notes" id="details-notes">None</span>
                 </div>
             </div>
 
-            <div class="entry-field">
-                <span class="entry-label">Notes</span>
-                <span class="entry-value entry-notes" id="details-notes">None</span>
+            <div class="entry-details-side">
+                <div class="entry-field">
+                    <span class="entry-label">Shared with</span>
+                    <div id="details-shared-with-list">
+                        <span class="entry-value entry-notes">Not shared yet</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

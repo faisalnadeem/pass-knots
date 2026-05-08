@@ -96,6 +96,7 @@ const detailsUsername = document.getElementById('details-username');
 const detailsPassword = document.getElementById('details-password');
 const detailsPasswordToggle = document.getElementById('details-password-toggle');
 const detailsNotes = document.getElementById('details-notes');
+const detailsSharedWithList = document.getElementById('details-shared-with-list');
 
 let detailsPasswordValue = '';
 let detailsPasswordVisible = false;
@@ -126,10 +127,30 @@ function openEntryDetailsModal(card) {
     const username = card.dataset.username || 'N/A';
     const password = card.dataset.password || '';
     const notes = card.dataset.notes || '';
+    const sharedEmails = (card.dataset.sharedEmails || '')
+        .split('||')
+        .map(v => v.trim())
+        .filter(Boolean);
 
     if (detailsSiteName) detailsSiteName.textContent = siteName;
     if (detailsUsername) detailsUsername.textContent = username;
     if (detailsNotes) detailsNotes.textContent = notes.trim() ? notes : 'None';
+    if (detailsSharedWithList) {
+        detailsSharedWithList.innerHTML = '';
+        if (sharedEmails.length === 0) {
+            const empty = document.createElement('span');
+            empty.className = 'entry-value entry-notes';
+            empty.textContent = 'Not shared yet';
+            detailsSharedWithList.appendChild(empty);
+        } else {
+            sharedEmails.forEach(email => {
+                const item = document.createElement('span');
+                item.className = 'entry-value entry-notes entry-shared-line';
+                item.textContent = email;
+                detailsSharedWithList.appendChild(item);
+            });
+        }
+    }
 
     if (detailsSiteUrl) {
         if (siteUrl.trim()) {

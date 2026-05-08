@@ -44,6 +44,8 @@ public class VaultService : IVaultService
     public async Task<List<DecryptedVaultEntry>> GetEntriesAsync(string userId, string encKey)
     {
         var entries = await _db.VaultEntries
+            .Include(e => e.SharedWith)
+            .ThenInclude(s => s.SharedWithUser)
             .Where(e => e.OwnerId == userId)
             .OrderByDescending(e => e.UpdatedAt)
             .ToListAsync();
