@@ -29,7 +29,15 @@
             <div class="entries-grid">
                 @foreach (var item in Model)
                 {
-                    <div class="entry-card">
+                    <div class="entry-card entry-details-trigger"
+                         role="button"
+                         tabindex="0"
+                         aria-label="View details for @item.Entry.SiteName"
+                         data-site-name="@item.Entry.SiteName"
+                         data-site-url="@item.Entry.SiteUrl"
+                         data-username="@item.Entry.Username"
+                         data-password="@item.PlainPassword"
+                         data-notes="@item.Entry.Notes">
                         <div class="entry-card-header">
                             <div class="entry-site-info">
                                 <div class="entry-favicon">
@@ -94,7 +102,15 @@
             <div class="entries-grid">
                 @foreach (var item in shared)
                 {
-                    <div class="entry-card entry-card-shared">
+                    <div class="entry-card entry-card-shared entry-details-trigger"
+                         role="button"
+                         tabindex="0"
+                         aria-label="View details for @item.Entry.SiteName"
+                         data-site-name="@item.Entry.SiteName"
+                         data-site-url="@item.Entry.SiteUrl"
+                         data-username="@item.Entry.Username"
+                         data-password="@item.PlainPassword"
+                         data-notes="@item.Entry.Notes">
                         <div class="shared-badge">Shared</div>
                         <div class="entry-card-header">
                             <div class="entry-site-info">
@@ -132,6 +148,48 @@
         <div class="confirm-modal-actions">
             <button type="button" class="btn btn-outline" id="delete-cancel-btn">Cancel</button>
             <button type="button" class="btn btn-danger" id="delete-confirm-btn">Delete</button>
+        </div>
+    </div>
+</div>
+
+<div id="entry-details-modal" class="confirm-modal-backdrop" hidden>
+    <div class="confirm-modal entry-details-modal"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="entry-details-title">
+        <div class="entry-details-header">
+            <h2 id="entry-details-title">Entry Details</h2>
+            <button type="button" class="btn-close-modal" id="entry-details-close" aria-label="Close details popup">×</button>
+        </div>
+
+        <div class="entry-details-body">
+            <div class="entry-field">
+                <span class="entry-label">Site / App Name</span>
+                <span class="entry-value" id="details-site-name">-</span>
+            </div>
+
+            <div class="entry-field">
+                <span class="entry-label">Site URL</span>
+                <a id="details-site-url" class="entry-url details-url" href="#" target="_blank" rel="noopener noreferrer">-</a>
+            </div>
+
+            <div class="entry-field">
+                <span class="entry-label">Username / Email</span>
+                <span class="entry-value" id="details-username">-</span>
+            </div>
+
+            <div class="entry-field">
+                <span class="entry-label">Password</span>
+                <div class="password-reveal">
+                    <span class="entry-value password-mask" id="details-password">••••••••••••</span>
+                    <button type="button" class="btn-reveal" id="details-password-toggle">Show</button>
+                </div>
+            </div>
+
+            <div class="entry-field">
+                <span class="entry-label">Notes</span>
+                <span class="entry-value entry-notes" id="details-notes">None</span>
+            </div>
         </div>
     </div>
 </div>

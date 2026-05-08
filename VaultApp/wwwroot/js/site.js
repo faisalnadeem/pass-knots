@@ -86,3 +86,93 @@ document.querySelectorAll('.alert').forEach(alert => {
         setTimeout(() => alert.remove(), 350);
     }, 3000);
 });
+
+// ── Entry details modal ────────────────────────────────────────────────────────
+const entryDetailsModal = document.getElementById('entry-details-modal');
+const entryDetailsCloseBtn = document.getElementById('entry-details-close');
+const detailsSiteName = document.getElementById('details-site-name');
+const detailsSiteUrl = document.getElementById('details-site-url');
+const detailsUsername = document.getElementById('details-username');
+const detailsPassword = document.getElementById('details-password');
+const detailsPasswordToggle = document.getElementById('details-password-toggle');
+const detailsNotes = document.getElementById('details-notes');
+
+let detailsPasswordValue = '';
+let detailsPasswordVisible = false;
+
+function setDetailsPasswordVisibility(visible) {
+    detailsPasswordVisible = visible;
+    if (!detailsPassword || !detailsPasswordToggle) return;
+    detailsPassword.textContent = visible ? detailsPasswordValue : '••••••••••••';
+    detailsPasswordToggle.textContent = visible ? 'Hide' : 'Show';
+}
+
+function closeEntryDetailsModal() {
+    if (!entryDetailsModal) return;
+    entryDetailsModal.hidden = true;
+    detailsPasswordValue = '';
+    setDetailsPasswordVisibility(false);
+}
+
+function openEntryDetailsModal(card) {
+    if (!entryDetailsModal || !card) return;
+
+    const siteName = card.dataset.siteName || 'N/A';
+    const siteUrl = card.dataset.siteUrl || '';
+    const username = card.dataset.username || 'N/A';
+    const password = card.dataset.password || '';
+    const notes = card.dataset.notes || '';
+
+    if (detailsSiteName) detailsSiteName.textContent = siteName;
+    if (detailsUsername) detailsUsername.textContent = username;
+    if (detailsNotes) detailsNotes.textContent = notes.trim() ? notes : 'None';
+
+    if (detailsSiteUrl) {
+        if (siteUrl.trim()) {
+            detailsSiteUrl.textContent = siteUrl;
+            detailsSiteUrl.href = siteUrl;
+            detailsSiteUrl.style.pointerEvents = 'auto';
+        } else {
+            detailsSiteUrl.textContent = 'None';
+            detailsSiteUrl.removeAttribute('href');
+            detailsSiteUrl.style.pointerEvents = 'none';
+        }
+    }
+
+    detailsPasswordValue = password;
+    setDetailsPasswordVisibility(false);
+    entryDetailsModal.hidden = false;
+}
+
+if (entryDetailsModal) {
+    document.querySelectorAll('.entry-details-trigger').forEach(card => {
+        card.addEventListener('click', e => {
+            if (e.target.closest('.entry-actions') || e.target.closest('.btn-reveal')) return;
+            openEntryDetailsModal(card);
+        });
+
+        card.addEventListener('keydown', e => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            e.preventDefault();
+            openEntryDetailsModal(card);
+        });
+    });
+
+    if (detailsPasswordToggle) {
+        detailsPasswordToggle.addEventListener('click', () => {
+            setDetailsPasswordVisibility(!detailsPasswordVisible);
+        });
+    }
+
+    if (entryDetailsCloseBtn) {
+        entryDetailsCloseBtn.addEventListener('click', closeEntryDetailsModal);
+    }
+
+    entryDetailsModal.addEventListener('click', e => {
+        if (e.target === entryDetailsModal) closeEntryDetailsModal();
+    });
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !entryDetailsModal.hidden) closeEntryDetailsModal();
+    });
+}
