@@ -99,6 +99,10 @@ const detailsNotes = document.getElementById('details-notes');
 
 let detailsPasswordValue = '';
 let detailsPasswordVisible = false;
+const cardsViewBtn = document.getElementById('view-cards-btn');
+const listViewBtn = document.getElementById('view-list-btn');
+const entriesCardsView = document.getElementById('entries-cards-view');
+const entriesListView = document.getElementById('entries-list-view');
 
 function setDetailsPasswordVisibility(visible) {
     detailsPasswordVisible = visible;
@@ -147,7 +151,7 @@ function openEntryDetailsModal(card) {
 if (entryDetailsModal) {
     document.querySelectorAll('.entry-details-trigger').forEach(card => {
         card.addEventListener('click', e => {
-            if (e.target.closest('.entry-actions') || e.target.closest('.btn-reveal')) return;
+            if (e.target.closest('.entry-actions') || e.target.closest('.btn-reveal') || e.target.closest('.entry-url')) return;
             openEntryDetailsModal(card);
         });
 
@@ -175,4 +179,24 @@ if (entryDetailsModal) {
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape' && !entryDetailsModal.hidden) closeEntryDetailsModal();
     });
+}
+
+// ── Vault cards/list switch ────────────────────────────────────────────────────
+function setVaultView(mode) {
+    if (!entriesCardsView || !entriesListView || !cardsViewBtn || !listViewBtn) return;
+
+    const showCards = mode !== 'list';
+    entriesCardsView.hidden = !showCards;
+    entriesListView.hidden = showCards;
+
+    cardsViewBtn.classList.toggle('is-active', showCards);
+    cardsViewBtn.setAttribute('aria-selected', showCards ? 'true' : 'false');
+    listViewBtn.classList.toggle('is-active', !showCards);
+    listViewBtn.setAttribute('aria-selected', showCards ? 'false' : 'true');
+}
+
+if (cardsViewBtn && listViewBtn && entriesCardsView && entriesListView) {
+    cardsViewBtn.addEventListener('click', () => setVaultView('cards'));
+    listViewBtn.addEventListener('click', () => setVaultView('list'));
+    setVaultView('cards');
 }

@@ -10,7 +10,13 @@
             <h1>My Vault</h1>
             <p class="vault-subtitle">@Model.Count entr@(Model.Count == 1 ? "y" : "ies") stored</p>
         </div>
-        <a asp-action="Create" class="btn btn-primary">+ New Entry</a>
+        <div class="vault-header-actions">
+            <div class="view-switch" role="tablist" aria-label="Vault view mode">
+                <button type="button" class="view-switch-btn is-active" id="view-cards-btn" data-view-mode="cards" role="tab" aria-selected="true">Cards</button>
+                <button type="button" class="view-switch-btn" id="view-list-btn" data-view-mode="list" role="tab" aria-selected="false">List</button>
+            </div>
+            <a asp-action="Create" class="btn btn-primary">+ New Entry</a>
+        </div>
     </div>
 
     @if (Model.Count == 0 && shared.Count == 0)
@@ -24,120 +30,198 @@
     }
     else
     {
-        @if (Model.Count > 0)
-        {
-            <div class="entries-grid">
-                @foreach (var item in Model)
-                {
-                    <div class="entry-card entry-details-trigger"
-                         role="button"
-                         tabindex="0"
-                         aria-label="View details for @item.Entry.SiteName"
-                         data-site-name="@item.Entry.SiteName"
-                         data-site-url="@item.Entry.SiteUrl"
-                         data-username="@item.Entry.Username"
-                         data-password="@item.PlainPassword"
-                         data-notes="@item.Entry.Notes">
-                        <div class="entry-card-header">
-                            <div class="entry-site-info">
+        <div id="entries-cards-view">
+            @if (Model.Count > 0)
+            {
+                <div class="entries-grid">
+                    @foreach (var item in Model)
+                    {
+                        <div class="entry-card entry-details-trigger"
+                             role="button"
+                             tabindex="0"
+                             aria-label="View details for @item.Entry.SiteName"
+                             data-site-name="@item.Entry.SiteName"
+                             data-site-url="@item.Entry.SiteUrl"
+                             data-username="@item.Entry.Username"
+                             data-password="@item.PlainPassword"
+                             data-notes="@item.Entry.Notes">
+                            <div class="entry-card-header">
+                                <div class="entry-site-info">
+                                    <div class="entry-favicon">
+                                        @(item.Entry.SiteName.Length > 0 ? item.Entry.SiteName[0].ToString().ToUpper() : "?")
+                                    </div>
+                                    <div>
+                                        <div class="entry-site-name">@item.Entry.SiteName</div>
+                                        @if (!string.IsNullOrEmpty(item.Entry.SiteUrl))
+                                        {
+                                            <a href="@item.Entry.SiteUrl" target="_blank" class="entry-url">@item.Entry.SiteUrl</a>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="entry-field">
+                                <span class="entry-label">Username</span>
+                                <span class="entry-value">@item.Entry.Username</span>
+                            </div>
+
+                            <div class="entry-field">
+                                <span class="entry-label">Password</span>
+                                <div class="password-reveal">
+                                    <span class="entry-value password-mask" id="pw-@item.Entry.Id">••••••••••••</span>
+                                    <button class="btn-reveal" data-password="@item.PlainPassword" data-target="pw-@item.Entry.Id">Show</button>
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(item.Entry.Notes))
+                            {
+                                <div class="entry-field">
+                                    <span class="entry-label">Notes</span>
+                                    <span class="entry-value entry-notes">@item.Entry.Notes</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="entry-field">
+                                    <span class="entry-label">Notes</span>
+                                    <span class="entry-value entry-notes">None</span>
+                                </div>
+                            }
+
+                            <div class="entry-actions">
+                                <a asp-action="Edit" asp-route-id="@item.Entry.Id" class="btn btn-sm">Edit</a>
+                                <a asp-action="Share" asp-route-id="@item.Entry.Id" class="btn btn-sm btn-outline">Share</a>
+                                <form asp-action="Delete" method="post" style="display:inline" class="delete-entry-form" data-entry-name="@item.Entry.SiteName">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Entry.Id" />
+                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (shared.Count > 0)
+            {
+                <h2 class="section-title">Shared with me</h2>
+                <div class="entries-grid">
+                    @foreach (var item in shared)
+                    {
+                        <div class="entry-card entry-card-shared entry-details-trigger"
+                             role="button"
+                             tabindex="0"
+                             aria-label="View details for @item.Entry.SiteName"
+                             data-site-name="@item.Entry.SiteName"
+                             data-site-url="@item.Entry.SiteUrl"
+                             data-username="@item.Entry.Username"
+                             data-password="@item.PlainPassword"
+                             data-notes="@item.Entry.Notes">
+                            <div class="shared-badge">Shared</div>
+                            <div class="entry-card-header">
+                                <div class="entry-site-info">
+                                    <div class="entry-favicon entry-favicon-shared">
+                                        @(item.Entry.SiteName.Length > 0 ? item.Entry.SiteName[0].ToString().ToUpper() : "?")
+                                    </div>
+                                    <div>
+                                        <div class="entry-site-name">@item.Entry.SiteName</div>
+                                        <div class="entry-owner">from @item.Entry.Owner?.Email</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="entry-field">
+                                <span class="entry-label">Username</span>
+                                <span class="entry-value">@item.Entry.Username</span>
+                            </div>
+                            <div class="entry-field">
+                                <span class="entry-label">Password</span>
+                                <div class="password-reveal">
+                                    <span class="entry-value password-mask" id="shared-pw-@item.Entry.Id">••••••••••••</span>
+                                    <button class="btn-reveal" data-password="@item.PlainPassword" data-target="shared-pw-@item.Entry.Id">Show</button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div id="entries-list-view" hidden>
+            @if (Model.Count > 0)
+            {
+                <div class="entries-list">
+                    @foreach (var item in Model)
+                    {
+                        <div class="entry-list-row entry-details-trigger"
+                             role="button"
+                             tabindex="0"
+                             aria-label="View details for @item.Entry.SiteName"
+                             data-site-name="@item.Entry.SiteName"
+                             data-site-url="@item.Entry.SiteUrl"
+                             data-username="@item.Entry.Username"
+                             data-password="@item.PlainPassword"
+                             data-notes="@item.Entry.Notes">
+                            <div class="entry-list-main">
                                 <div class="entry-favicon">
                                     @(item.Entry.SiteName.Length > 0 ? item.Entry.SiteName[0].ToString().ToUpper() : "?")
                                 </div>
-                                <div>
+                                <div class="entry-list-meta">
                                     <div class="entry-site-name">@item.Entry.SiteName</div>
-                                    @if (!string.IsNullOrEmpty(item.Entry.SiteUrl))
-                                    {
-                                        <a href="@item.Entry.SiteUrl" target="_blank" class="entry-url">@item.Entry.SiteUrl</a>
-                                    }
+                                    <span class="entry-list-secondary">@item.Entry.Username</span>
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="entry-field">
-                            <span class="entry-label">Username</span>
-                            <span class="entry-value">@item.Entry.Username</span>
-                        </div>
-
-                        <div class="entry-field">
-                            <span class="entry-label">Password</span>
-                            <div class="password-reveal">
-                                <span class="entry-value password-mask" id="pw-@item.Entry.Id">••••••••••••</span>
-                                <button class="btn-reveal" data-password="@item.PlainPassword" data-target="pw-@item.Entry.Id">Show</button>
+                            <div class="entry-list-password">
+                                <span class="entry-value password-mask" id="list-pw-@item.Entry.Id">••••••••••••</span>
+                                <button class="btn-reveal" data-password="@item.PlainPassword" data-target="list-pw-@item.Entry.Id">Show</button>
+                            </div>
+                            <div class="entry-actions entry-actions-list">
+                                <a asp-action="Edit" asp-route-id="@item.Entry.Id" class="btn btn-sm">Edit</a>
+                                <a asp-action="Share" asp-route-id="@item.Entry.Id" class="btn btn-sm btn-outline">Share</a>
+                                <form asp-action="Delete" method="post" style="display:inline" class="delete-entry-form" data-entry-name="@item.Entry.SiteName">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Entry.Id" />
+                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                </form>
                             </div>
                         </div>
+                    }
+                </div>
+            }
 
-                        @if (!string.IsNullOrEmpty(item.Entry.Notes))
-                        {
-                            <div class="entry-field">
-                                <span class="entry-label">Notes</span>
-                                <span class="entry-value entry-notes">@item.Entry.Notes</span>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="entry-field">
-                                <span class="entry-label">Notes</span>
-                                <span class="entry-value entry-notes">None</span>
-                            </div>
-
-                        }
-
-                        <div class="entry-actions">
-                            <a asp-action="Edit" asp-route-id="@item.Entry.Id" class="btn btn-sm">Edit</a>
-                            <a asp-action="Share" asp-route-id="@item.Entry.Id" class="btn btn-sm btn-outline">Share</a>
-                            <form asp-action="Delete" method="post" style="display:inline" class="delete-entry-form" data-entry-name="@item.Entry.SiteName">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="id" value="@item.Entry.Id" />
-                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                            </form>
-                        </div>
-                    </div>
-                }
-            </div>
-        }
-
-        @if (shared.Count > 0)
-        {
-            <h2 class="section-title">Shared with me</h2>
-            <div class="entries-grid">
-                @foreach (var item in shared)
-                {
-                    <div class="entry-card entry-card-shared entry-details-trigger"
-                         role="button"
-                         tabindex="0"
-                         aria-label="View details for @item.Entry.SiteName"
-                         data-site-name="@item.Entry.SiteName"
-                         data-site-url="@item.Entry.SiteUrl"
-                         data-username="@item.Entry.Username"
-                         data-password="@item.PlainPassword"
-                         data-notes="@item.Entry.Notes">
-                        <div class="shared-badge">Shared</div>
-                        <div class="entry-card-header">
-                            <div class="entry-site-info">
+            @if (shared.Count > 0)
+            {
+                <h2 class="section-title">Shared with me</h2>
+                <div class="entries-list">
+                    @foreach (var item in shared)
+                    {
+                        <div class="entry-list-row entry-list-row-shared entry-details-trigger"
+                             role="button"
+                             tabindex="0"
+                             aria-label="View details for @item.Entry.SiteName"
+                             data-site-name="@item.Entry.SiteName"
+                             data-site-url="@item.Entry.SiteUrl"
+                             data-username="@item.Entry.Username"
+                             data-password="@item.PlainPassword"
+                             data-notes="@item.Entry.Notes">
+                            <div class="entry-list-main">
                                 <div class="entry-favicon entry-favicon-shared">
                                     @(item.Entry.SiteName.Length > 0 ? item.Entry.SiteName[0].ToString().ToUpper() : "?")
                                 </div>
-                                <div>
+                                <div class="entry-list-meta">
                                     <div class="entry-site-name">@item.Entry.SiteName</div>
-                                    <div class="entry-owner">from @item.Entry.Owner?.Email</div>
+                                    <span class="entry-list-secondary">from @item.Entry.Owner?.Email</span>
                                 </div>
                             </div>
-                        </div>
-                        <div class="entry-field">
-                            <span class="entry-label">Username</span>
-                            <span class="entry-value">@item.Entry.Username</span>
-                        </div>
-                        <div class="entry-field">
-                            <span class="entry-label">Password</span>
-                            <div class="password-reveal">
-                                <span class="entry-value password-mask" id="shared-pw-@item.Entry.Id">••••••••••••</span>
-                                <button class="btn-reveal" data-password="@item.PlainPassword" data-target="shared-pw-@item.Entry.Id">Show</button>
+                            <div class="entry-list-password">
+                                <span class="entry-value password-mask" id="list-shared-pw-@item.Entry.Id">••••••••••••</span>
+                                <button class="btn-reveal" data-password="@item.PlainPassword" data-target="list-shared-pw-@item.Entry.Id">Show</button>
                             </div>
+                            <div class="entry-list-tag">Shared</div>
                         </div>
-                    </div>
-                }
-            </div>
-        }
+                    }
+                </div>
+            }
+        </div>
     }
 </div>
 
