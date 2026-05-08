@@ -591,6 +591,13 @@ body {
 }
 .details-url {
   font-size: .85rem;
+  color: var(--text);
+}
+.details-url:hover {
+  color: var(--text);
+}
+.entry-details-modal .entry-notes {
+  color: var(--text);
 }
 
 @media (max-width: 900px) {
