@@ -10,6 +10,13 @@
             <h1>My Vault</h1>
             <p class="vault-subtitle">@Model.Count entr@(Model.Count == 1 ? "y" : "ies") stored</p>
         </div>
+        <div class="vault-search-wrap">
+            <input type="search"
+                   id="vault-search"
+                   class="vault-search-input"
+                   placeholder="Search by site, URL, username/email, notes..."
+                   aria-label="Search vault entries" />
+        </div>
         <div class="vault-header-actions">
             <div class="view-switch" role="tablist" aria-label="Vault view mode">
                 <button type="button" class="view-switch-btn is-active" id="view-cards-btn" data-view-mode="cards" role="tab" aria-selected="true">Cards</button>

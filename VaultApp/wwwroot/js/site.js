@@ -200,3 +200,42 @@ if (cardsViewBtn && listViewBtn && entriesCardsView && entriesListView) {
     listViewBtn.addEventListener('click', () => setVaultView('list'));
     setVaultView('cards');
 }
+
+// ── Vault search filter ────────────────────────────────────────────────────────
+const vaultSearchInput = document.getElementById('vault-search');
+
+function toggleSectionTitles(viewContainer) {
+    if (!viewContainer) return;
+    viewContainer.querySelectorAll('.section-title').forEach(title => {
+        const sectionBody = title.nextElementSibling;
+        if (!sectionBody) return;
+        const visibleEntries = sectionBody.querySelectorAll('.entry-details-trigger:not([hidden])').length;
+        title.hidden = visibleEntries === 0;
+    });
+}
+
+function applyVaultSearchFilter(query) {
+    const normalizedQuery = (query || '').trim().toLowerCase();
+    const entryNodes = document.querySelectorAll('.entry-details-trigger');
+
+    entryNodes.forEach(node => {
+        const searchableText = [
+            node.dataset.siteName || '',
+            node.dataset.siteUrl || '',
+            node.dataset.username || '',
+            node.dataset.notes || ''
+        ].join(' ').toLowerCase();
+
+        const isMatch = !normalizedQuery || searchableText.includes(normalizedQuery);
+        node.hidden = !isMatch;
+    });
+
+    toggleSectionTitles(entriesCardsView);
+    toggleSectionTitles(entriesListView);
+}
+
+if (vaultSearchInput) {
+    vaultSearchInput.addEventListener('input', e => {
+        applyVaultSearchFilter(e.target.value);
+    });
+}

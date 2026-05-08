@@ -258,9 +258,34 @@ body {
 .vault-header {
   display: flex; align-items: flex-start; justify-content: space-between;
   margin-bottom: 2rem;
+  gap: 1rem;
 }
 .vault-header h1 { font-size: 1.8rem; font-weight: 600; margin-bottom: .25rem; }
 .vault-subtitle { color: var(--text3); font-size: .875rem; }
+.vault-search-wrap {
+  flex: 1;
+  max-width: 480px;
+  margin-top: .15rem;
+}
+.vault-search-input {
+  width: 100%;
+  padding: .62rem .85rem;
+  border-radius: 8px;
+  border: 1px solid var(--border2);
+  background: var(--bg2);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: .88rem;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.vault-search-input::placeholder {
+  color: var(--text3);
+}
+.vault-search-input:focus {
+  border-color: rgba(74,222,128,.45);
+  box-shadow: 0 0 0 3px rgba(74,222,128,.08);
+}
 .vault-header-actions {
   display: flex;
   align-items: center;
@@ -569,6 +594,17 @@ body {
 }
 
 @media (max-width: 900px) {
+  .vault-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .vault-search-wrap {
+    max-width: none;
+    margin-top: 0;
+  }
+  .vault-header-actions {
+    justify-content: flex-end;
+  }
   .entry-list-row {
     flex-wrap: wrap;
   }
