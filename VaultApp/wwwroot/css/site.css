@@ -339,6 +339,13 @@ body {
   outline-offset: 2px;
 }
 .entry-card-shared { border-color: rgba(74,222,128,.15); }
+.entry-card-shared .entry-url,
+.entry-card-shared .entry-notes {
+  color: var(--text);
+}
+.entry-card-shared .entry-url:hover {
+  color: var(--text);
+}
 .shared-badge {
   position: absolute; top: .75rem; right: .75rem;
   background: var(--accent-dim); color: var(--accent);

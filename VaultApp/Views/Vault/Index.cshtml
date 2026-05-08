@@ -140,12 +140,23 @@
                                 <span class="entry-label">Username</span>
                                 <span class="entry-value">@item.Entry.Username</span>
                             </div>
+                            @if (!string.IsNullOrEmpty(item.Entry.SiteUrl))
+                            {
+                                <div class="entry-field">
+                                    <span class="entry-label">Site URL</span>
+                                    <a href="@item.Entry.SiteUrl" target="_blank" class="entry-url">@item.Entry.SiteUrl</a>
+                                </div>
+                            }
                             <div class="entry-field">
                                 <span class="entry-label">Password</span>
                                 <div class="password-reveal">
                                     <span class="entry-value password-mask" id="shared-pw-@item.Entry.Id">••••••••••••</span>
                                     <button class="btn-reveal" data-password="@item.PlainPassword" data-target="shared-pw-@item.Entry.Id">Show</button>
                                 </div>
+                            </div>
+                            <div class="entry-field">
+                                <span class="entry-label">Notes</span>
+                                <span class="entry-value entry-notes">@(string.IsNullOrWhiteSpace(item.Entry.Notes) ? "None" : item.Entry.Notes)</span>
                             </div>
                         </div>
                     }
@@ -217,6 +228,12 @@
                                 <div class="entry-list-meta">
                                     <div class="entry-site-name">@item.Entry.SiteName</div>
                                     <span class="entry-list-secondary">from @item.Entry.Owner?.Email</span>
+                                    <span class="entry-list-secondary">user: @item.Entry.Username</span>
+                                    @if (!string.IsNullOrWhiteSpace(item.Entry.SiteUrl))
+                                    {
+                                        <span class="entry-list-secondary">url: @item.Entry.SiteUrl</span>
+                                    }
+                                    <span class="entry-list-secondary">notes: @(string.IsNullOrWhiteSpace(item.Entry.Notes) ? "None" : item.Entry.Notes)</span>
                                 </div>
                             </div>
                             <div class="entry-list-password">
