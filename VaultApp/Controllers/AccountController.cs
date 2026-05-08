@@ -9,6 +9,7 @@ namespace VaultApp.Controllers;
 public class AccountController : Controller
 {
     private const string EncKeyCookieName = "VaultApp.EncKey";
+    private readonly ILogger<AccountController>      _logger;
     private readonly UserManager<ApplicationUser>   _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IEncryptionService             _enc;
@@ -16,12 +17,14 @@ public class AccountController : Controller
     private readonly IDataProtector                 _encKeyProtector;
 
     public AccountController(
+        ILogger<AccountController>       logger,
         UserManager<ApplicationUser>   userManager,
         SignInManager<ApplicationUser> signInManager,
         IEncryptionService             enc,
         IVaultService                  vault,
         IDataProtectionProvider        dataProtectionProvider)
     {
+        _logger        = logger;
         _userManager   = userManager;
         _signInManager = signInManager;
         _enc           = enc;
@@ -53,7 +56,14 @@ public class AccountController : Controller
             WriteEncKeyCookie(model.EncryptionKey, false);
             if (!string.IsNullOrWhiteSpace(user.Email))
             {
-                await _vault.ClaimPendingSharesAsync(user.Id, user.Email);
+                try
+                {
+                    await _vault.ClaimPendingSharesAsync(user.Id, user.Email);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to claim pending shares during register for user {UserId}", user.Id);
+                }
             }
             return RedirectToAction("Index", "Vault");
         }
@@ -101,7 +111,14 @@ public class AccountController : Controller
             WriteEncKeyCookie(model.EncryptionKey, model.RememberMe);
             if (!string.IsNullOrWhiteSpace(user.Email))
             {
-                await _vault.ClaimPendingSharesAsync(user.Id, user.Email);
+                try
+                {
+                    await _vault.ClaimPendingSharesAsync(user.Id, user.Email);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to claim pending shares during login for user {UserId}", user.Id);
+                }
             }
             return LocalRedirect(returnUrl ?? "/Vault");
         }
