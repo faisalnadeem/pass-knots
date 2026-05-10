@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using VaultApp.Data;
 using VaultApp.Models;
 
@@ -123,8 +122,6 @@ public class VaultService : IVaultService
     public async Task<(bool ok, string error, bool pendingInvite)> ShareAsync(
         int entryId, string ownerId, string ownerKey, string recipientEmail)
     {
-        await EnsurePendingShareSchemaAsync();
-
         var entry = await _db.VaultEntries
             .FirstOrDefaultAsync(e => e.Id == entryId && e.OwnerId == ownerId);
         if (entry is null) return (false, "Entry not found.", false);
@@ -267,8 +264,6 @@ public class VaultService : IVaultService
 
     public async Task ClaimPendingSharesAsync(string userId, string email)
     {
-        await EnsurePendingShareSchemaAsync();
-
         var normalizedEmail = (email ?? "").Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(normalizedEmail)) return;
 
@@ -329,10 +324,8 @@ public class VaultService : IVaultService
 
     private string SafeDecryptShared(string cipher, string iv, string userId)
     {
-        // v2: server-scoped share key + recipient id
         try { return _enc.Decrypt(cipher, iv, BuildShareKey(userId)); } catch { }
 
-        // backward-compat for earlier attempt where recipient id only was used
         try { return _enc.Decrypt(cipher, iv, userId); } catch { }
 
         return "[Decryption failed — wrong key?]";
@@ -341,29 +334,4 @@ public class VaultService : IVaultService
     private string BuildShareKey(string userId) => $"{_shareSecret}:{userId}";
     private string BuildPendingShareKey(string email) => $"{_shareSecret}:pending:{email}";
 
-    private async Task EnsurePendingShareSchemaAsync()
-    {
-        if (_pendingShareSchemaEnsured) return;
-
-        const string sql = """
-IF OBJECT_ID('PendingShares', 'U') IS NULL
-BEGIN
-    CREATE TABLE [PendingShares](
-        [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-        [VaultEntryId] INT NOT NULL,
-        [RecipientEmail] NVARCHAR(256) NOT NULL,
-        [EncryptedPassword] NVARCHAR(MAX) NOT NULL,
-        [IV] NVARCHAR(MAX) NOT NULL,
-        [CreatedAt] DATETIME2 NOT NULL,
-        CONSTRAINT [FK_PendingShares_VaultEntries_VaultEntryId]
-            FOREIGN KEY([VaultEntryId]) REFERENCES [VaultEntries]([Id]) ON DELETE CASCADE
-    );
-    CREATE UNIQUE INDEX [IX_PendingShares_VaultEntryId_RecipientEmail]
-        ON [PendingShares] ([VaultEntryId], [RecipientEmail]);
-END
-""";
-
-        await _db.Database.ExecuteSqlRawAsync(sql);
-        _pendingShareSchemaEnsured = true;
-    }
 }
