@@ -346,9 +346,9 @@ public class VaultService : IVaultService
         if (_pendingShareSchemaEnsured) return;
 
         const string sql = """
-IF OBJECT_ID('dbo.PendingShares', 'U') IS NULL
+IF OBJECT_ID('PendingShares', 'U') IS NULL
 BEGIN
-    CREATE TABLE [dbo].[PendingShares](
+    CREATE TABLE [PendingShares](
         [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
         [VaultEntryId] INT NOT NULL,
         [RecipientEmail] NVARCHAR(256) NOT NULL,
@@ -356,10 +356,10 @@ BEGIN
         [IV] NVARCHAR(MAX) NOT NULL,
         [CreatedAt] DATETIME2 NOT NULL,
         CONSTRAINT [FK_PendingShares_VaultEntries_VaultEntryId]
-            FOREIGN KEY([VaultEntryId]) REFERENCES [dbo].[VaultEntries]([Id]) ON DELETE CASCADE
+            FOREIGN KEY([VaultEntryId]) REFERENCES [VaultEntries]([Id]) ON DELETE CASCADE
     );
     CREATE UNIQUE INDEX [IX_PendingShares_VaultEntryId_RecipientEmail]
-        ON [dbo].[PendingShares] ([VaultEntryId], [RecipientEmail]);
+        ON [PendingShares] ([VaultEntryId], [RecipientEmail]);
 END
 """;
 
