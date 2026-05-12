@@ -27,7 +27,6 @@ public class VaultController : Controller
         return RedirectToAction("Login", "Account");
     }
 
-    // ── Index ─────────────────────────────────────────────────────────────────
     public async Task<IActionResult> Index()
     {
         if (EncKey is null) return RequireKey();
@@ -37,7 +36,6 @@ public class VaultController : Controller
         return View(own);
     }
 
-    // ── Create ────────────────────────────────────────────────────────────────
     [HttpGet] public IActionResult Create() => View(new VaultEntryViewModel());
 
     [HttpPost, ValidateAntiForgeryToken]
@@ -50,7 +48,6 @@ public class VaultController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // ── Edit ──────────────────────────────────────────────────────────────────
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
@@ -79,7 +76,6 @@ public class VaultController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // ── Delete ────────────────────────────────────────────────────────────────
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
     {
@@ -88,7 +84,6 @@ public class VaultController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // ── Share ─────────────────────────────────────────────────────────────────
     [HttpGet]
     public async Task<IActionResult> Share(int id)
     {
