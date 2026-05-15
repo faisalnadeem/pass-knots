@@ -222,7 +222,7 @@ function setVaultView(mode) {
 if (cardsViewBtn && listViewBtn && entriesCardsView && entriesListView) {
     cardsViewBtn.addEventListener('click', () => setVaultView('cards'));
     listViewBtn.addEventListener('click', () => setVaultView('list'));
-    setVaultView('cards');
+    setVaultView('list');
 }
 
 // ── Vault search filter ────────────────────────────────────────────────────────
