@@ -99,7 +99,12 @@ public class VaultController : Controller
         {
             VaultEntryId = id,
             SiteName = entry.Entry.SiteName,
-            SharedWith = await _vault.GetSharedRecipientsAsync(id, UserId)
+            SharedWith = await _vault.GetSharedRecipientsAsync(id, UserId),
+            ActiveShareCode = TempData["ShareCodeDisplay"] as string,
+            ActiveShareCodeExpiresAt = TempData["ShareCodeExpiresAt"] is string exp
+                && DateTime.TryParse(exp, null, System.Globalization.DateTimeStyles.RoundtripKind, out var parsed)
+                ? parsed
+                : null
         };
         return View(model);
     }
@@ -108,8 +113,16 @@ public class VaultController : Controller
     public async Task<IActionResult> Share(ShareViewModel model)
     {
         model.SharedWith = await _vault.GetSharedRecipientsAsync(model.VaultEntryId, UserId);
-        if (!ModelState.IsValid) return View(model);
         if (EncKey is null) return RequireKey();
+
+        if (string.IsNullOrWhiteSpace(model.RecipientEmail))
+        {
+            ModelState.AddModelError(nameof(model.RecipientEmail), "Recipient email is required.");
+            return View(model);
+        }
+
+        if (!ModelState.IsValid)
+            return View(model);
 
         var (ok, error, pendingInvite) = await _vault.ShareAsync(
             model.VaultEntryId, UserId, EncKey, model.RecipientEmail);
@@ -135,5 +148,44 @@ public class VaultController : Controller
             ? "Sharing removed."
             : "Unable to remove sharing.";
         return RedirectToAction(nameof(Share), new { id = vaultEntryId });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> GenerateShareCode(int vaultEntryId)
+    {
+        if (EncKey is null) return RequireKey();
+
+        var (ok, error, shareCode, expiresAt) = await _vault.GenerateShareCodeAsync(vaultEntryId, UserId, EncKey);
+        if (ok)
+        {
+            TempData["ShareCodeDisplay"] = shareCode;
+            if (expiresAt.HasValue)
+                TempData["ShareCodeExpiresAt"] = expiresAt.Value.ToString("o");
+            TempData["Success"] = "Share code generated. Copy it before you leave this page.";
+        }
+        else
+        {
+            TempData["Error"] = error;
+        }
+
+        return RedirectToAction(nameof(Share), new { id = vaultEntryId });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> RedeemShareCode(RedeemShareCodeViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "Please enter a valid share code.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        if (EncKey is null) return RequireKey();
+
+        var (ok, error) = await _vault.RedeemShareCodeAsync(model.ShareCode, UserId);
+        TempData[ok ? "Success" : "Error"] = ok
+            ? "Entry added to Shared with me."
+            : error;
+        return RedirectToAction(nameof(Index));
     }
 }

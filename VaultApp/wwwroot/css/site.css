@@ -237,7 +237,20 @@ body {
   border-radius: var(--radius-sm); padding: .75rem 1rem;
   margin-bottom: 1rem; font-size: .875rem; color: var(--danger);
 }
+.validation-summary.validation-summary-valid,
+.validation-summary:empty {
+  display: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
 .validation-summary ul { padding-left: 1.2rem; margin: 0; }
+.validation-summary-line {
+  margin: 0;
+}
+.validation-summary-line + .validation-summary-line {
+  margin-top: .35rem;
+}
 
 /* ── Form page ──────────────────────────────────────────────────────────────── */
 .form-page { display: flex; justify-content: center; padding: 3rem 1rem; }
@@ -475,6 +488,12 @@ body {
 .empty-icon { font-size: 3rem; display: block; margin-bottom: 1rem; }
 .empty-state h2 { font-size: 1.25rem; margin-bottom: .5rem; color: var(--text); }
 .empty-state p  { font-size: .9rem; margin-bottom: 1.5rem; }
+.empty-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  justify-content: center;
+}
 
 /* ── Share info box ─────────────────────────────────────────────────────────── */
 .share-info {
@@ -542,7 +561,10 @@ body {
   justify-content: center;
   padding: 1rem;
 }
-.confirm-modal-backdrop[hidden] { display: none; }
+.confirm-modal-backdrop[hidden]:not(.is-open) { display: none; }
+.confirm-modal-backdrop.is-open {
+  display: flex;
+}
 .confirm-modal {
   width: 100%;
   max-width: 430px;
@@ -627,6 +649,64 @@ body {
   .entry-details-layout {
     grid-template-columns: 1fr;
   }
+}
+
+.share-section {
+  margin-top: 1.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border2);
+}
+.share-section h2 {
+  font-size: 1rem;
+  margin-bottom: .75rem;
+}
+.share-code-hint {
+  color: var(--text2);
+  font-size: .85rem;
+  margin-bottom: 1rem;
+}
+.share-code-warning {
+  color: var(--danger);
+  font-weight: 500;
+}
+.share-code-box {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.share-code-row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex-wrap: wrap;
+  margin-top: .35rem;
+}
+.share-code-value {
+  font-size: 1.1rem;
+  letter-spacing: .06em;
+  color: var(--accent);
+}
+.share-code-expiry {
+  font-size: .8rem;
+  color: var(--text3);
+  margin-top: .5rem;
+  margin-bottom: 0;
+}
+.share-code-generate-form {
+  margin-top: .5rem;
+}
+.share-page-footer {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border2);
+}
+.share-code-input {
+  width: 100%;
+  font-family: ui-monospace, monospace;
+  letter-spacing: .05em;
+  text-transform: uppercase;
 }
 
 @media (max-width: 900px) {

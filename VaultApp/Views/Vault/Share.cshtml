@@ -12,7 +12,7 @@
             <span class="share-info-icon">🔗</span>
             <div>
                 <strong>@Model.SiteName</strong>
-                <p>Share this entry with another KeyVault user. If they do not have an account yet, they will receive a signup invite email.</p>
+                <p>Share by email or generate a one-time code (valid 30 days, single use).</p>
             </div>
         </div>
 
@@ -39,22 +39,98 @@
             }
         </div>
 
-        <form asp-action="Share" method="post">
-            @Html.AntiForgeryToken()
-            <input asp-for="VaultEntryId" type="hidden" />
-            <input asp-for="SiteName" type="hidden" />
-            <div asp-validation-summary="All" class="validation-summary"></div>
+        <div class="share-section">
+            <h2>Share by email</h2>
+            <form asp-action="Share" method="post">
+                @Html.AntiForgeryToken()
+                <input asp-for="VaultEntryId" type="hidden" />
+                <input asp-for="SiteName" type="hidden" />
 
-            <div class="field-group">
-                <label asp-for="RecipientEmail">Recipient's Email</label>
-                <input asp-for="RecipientEmail" type="email" placeholder="friend@example.com" />
-                <span asp-validation-for="RecipientEmail" class="field-error"></span>
-            </div>
+                @{
+                    var shareFormErrors = ViewData.ModelState
+                        .Where(kv => kv.Value?.Errors.Count > 0)
+                        .SelectMany(kv => kv.Value!.Errors.Select(e => e.ErrorMessage))
+                        .Where(msg => !string.IsNullOrWhiteSpace(msg))
+                        .ToList();
+                }
+                @if (shareFormErrors.Count > 0)
+                {
+                    <div class="validation-summary" role="alert">
+                        @foreach (var msg in shareFormErrors)
+                        {
+                            <p class="validation-summary-line">@msg</p>
+                        }
+                    </div>
+                }
 
-            <div class="form-actions">
-                <a asp-action="Index" class="btn btn-outline">Cancel</a>
-                <button type="submit" class="btn btn-primary">Share Entry</button>
-            </div>
-        </form>
+                <div class="field-group">
+                    <label asp-for="RecipientEmail">Recipient's Email</label>
+                    <input asp-for="RecipientEmail" type="email" placeholder="friend@example.com" />
+                    <span asp-validation-for="RecipientEmail" class="field-error"></span>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Share by Email</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="share-section share-section-code">
+            <h2>Share by code</h2>
+            <p class="share-code-hint">
+                Anyone with the code can add this entry once.
+                <span class="share-code-warning">Copy the code before leaving the page.</span>
+            </p>
+
+            @if (!string.IsNullOrEmpty(Model.ActiveShareCode))
+            {
+                <div class="share-code-box">
+                    <label class="entry-label">Active share code</label>
+                    <div class="share-code-row">
+                        <code id="active-share-code" class="share-code-value">@Model.ActiveShareCode</code>
+                        <button type="button" class="btn btn-outline btn-sm" id="copy-share-code-btn">Copy</button>
+                    </div>
+                    @if (Model.ActiveShareCodeExpiresAt.HasValue)
+                    {
+                        <p class="share-code-expiry">Expires @Model.ActiveShareCodeExpiresAt.Value.ToLocalTime().ToString("g")</p>
+                    }
+                </div>
+            }
+
+            <form asp-action="GenerateShareCode" method="post" class="share-code-generate-form">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="vaultEntryId" value="@Model.VaultEntryId" />
+                <button type="submit" class="btn btn-outline">Generate Share Code</button>
+            </form>
+        </div>
+
+        <div class="form-actions share-page-footer">
+            <a asp-action="Index" class="btn btn-outline">Back to Vault</a>
+        </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.getElementById('copy-share-code-btn')?.addEventListener('click', async () => {
+            const code = document.getElementById('active-share-code')?.textContent?.trim();
+            if (!code) return;
+            try {
+                await navigator.clipboard.writeText(code);
+            } catch {
+                const ta = document.createElement('textarea');
+                ta.value = code;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                ta.remove();
+            }
+            const btn = document.getElementById('copy-share-code-btn');
+            if (btn) {
+                const prev = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => { btn.textContent = prev; }, 1500);
+            }
+        });
+    </script>
+}

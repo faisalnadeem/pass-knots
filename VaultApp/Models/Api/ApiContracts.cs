@@ -112,3 +112,15 @@ public class ShareRecipientDto
     public int SharedEntryId { get; set; }
     public string Email { get; set; } = "";
 }
+
+public class GenerateShareCodeResponse
+{
+    public string ShareCode { get; set; } = "";
+    public DateTime ExpiresAt { get; set; }
+}
+
+public class RedeemShareCodeRequest
+{
+    [Required, MaxLength(32)]
+    public string ShareCode { get; set; } = "";
+}

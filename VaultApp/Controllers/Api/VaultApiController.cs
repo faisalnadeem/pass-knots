@@ -224,6 +224,43 @@ public class VaultApiController : ControllerBase
         return Ok(new ShareEntryResponse { PendingInvite = pendingInvite, Message = message });
     }
 
+    /// <summary>Generate a one-time share code (30-day expiry).</summary>
+    [HttpPost("entries/{id:int}/share-code")]
+    [ProducesResponseType(typeof(GenerateShareCodeResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GenerateShareCode(
+        int id,
+        [FromHeader(Name = ApiConstants.EncryptionKeyHeader)] string? encryptionKey)
+    {
+        if (!TryGetEncryptionKey(encryptionKey, out var bad)) return bad;
+
+        var (ok, error, shareCode, expiresAt) = await _vault.GenerateShareCodeAsync(id, UserId, encryptionKey!);
+        if (!ok)
+            return BadRequest(new { error });
+
+        return Ok(new GenerateShareCodeResponse
+        {
+            ShareCode = shareCode!,
+            ExpiresAt = expiresAt!.Value
+        });
+    }
+
+    /// <summary>Redeem a share code and add the entry to Shared with me.</summary>
+    [HttpPost("shared/redeem")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RedeemShareCode([FromBody] RedeemShareCodeRequest model)
+    {
+        if (!ModelState.IsValid)
+            return ValidationProblem(ModelState);
+
+        var (ok, error) = await _vault.RedeemShareCodeAsync(model.ShareCode, UserId);
+        if (!ok)
+            return BadRequest(new { error });
+
+        return NoContent();
+    }
+
     /// <summary>Remove sharing for a recipient.</summary>
     [HttpDelete("entries/{vaultEntryId:int}/shares/{sharedEntryId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

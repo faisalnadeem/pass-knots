@@ -12,7 +12,10 @@ document.querySelectorAll('.eye-btn').forEach(btn => {
 // ── Reveal vault entries ──────────────────────────────────────────────────────
 document.querySelectorAll('.btn-reveal').forEach(btn => {
     const pwd = btn.dataset.password;
-    const target = document.getElementById(btn.dataset.target);
+    const targetId = btn.dataset.target;
+    if (!targetId) return;
+    const target = document.getElementById(targetId);
+    if (!target) return;
     let visible = false;
     btn.addEventListener('click', () => {
         visible = !visible;
@@ -259,4 +262,53 @@ if (vaultSearchInput) {
     vaultSearchInput.addEventListener('input', e => {
         applyVaultSearchFilter(e.target.value);
     });
+}
+
+// ── Redeem share code modal ─────────────────────────────────────────────────────
+function initRedeemShareModal() {
+    const redeemShareModal = document.getElementById('redeem-share-modal');
+    const redeemShareOpenBtn = document.getElementById('redeem-share-open-btn');
+    const redeemShareCancelBtn = document.getElementById('redeem-share-cancel-btn');
+    const redeemShareCodeInput = document.getElementById('redeem-share-code-input');
+
+    if (!redeemShareModal) return;
+
+    function openRedeemShareModal() {
+        redeemShareModal.classList.add('is-open');
+        redeemShareModal.hidden = false;
+        redeemShareModal.removeAttribute('hidden');
+        redeemShareCodeInput?.focus();
+    }
+
+    function closeRedeemShareModal() {
+        redeemShareModal.classList.remove('is-open');
+        redeemShareModal.hidden = true;
+        redeemShareModal.setAttribute('hidden', '');
+    }
+
+    document.querySelectorAll('[data-redeem-share-open]').forEach(btn => {
+        btn.addEventListener('click', openRedeemShareModal);
+    });
+
+    if (redeemShareOpenBtn) {
+        redeemShareOpenBtn.addEventListener('click', openRedeemShareModal);
+    }
+
+    if (redeemShareCancelBtn) {
+        redeemShareCancelBtn.addEventListener('click', closeRedeemShareModal);
+    }
+
+    redeemShareModal.addEventListener('click', e => {
+        if (e.target === redeemShareModal) closeRedeemShareModal();
+    });
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !redeemShareModal.hidden) closeRedeemShareModal();
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initRedeemShareModal);
+} else {
+    initRedeemShareModal();
 }

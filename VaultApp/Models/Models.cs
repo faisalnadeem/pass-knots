@@ -60,12 +60,27 @@ public class PendingShare
     public int VaultEntryId { get; set; }
     public VaultEntry? VaultEntry { get; set; }
 
-    [Required, EmailAddress, MaxLength(256)]
-    public string RecipientEmail { get; set; } = "";
+    /// <summary>User who owns the vault entry and created this share.</summary>
+    [Required]
+    public string UserId { get; set; } = "";
+    public ApplicationUser? User { get; set; }
+
+    [EmailAddress, MaxLength(256)]
+    public string? RecipientEmail { get; set; }
+
+    [MaxLength(32)]
+    public string? ShareCode { get; set; }
 
     public string EncryptedPassword { get; set; } = "";
     public string IV { get; set; } = "";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime ExpiresAt { get; set; }
+
+    public bool IsConsumed { get; set; }
+
+    /// <summary>User who redeemed the share code.</summary>
+    public string? SharedWithUserId { get; set; }
+    public ApplicationUser? SharedWithUser { get; set; }
 }
 
 // ── View-models ───────────────────────────────────────────────────────────────
@@ -134,9 +149,19 @@ public class ShareViewModel
     public string SiteName       { get; set; } = "";
     public List<ShareRecipientViewModel> SharedWith { get; set; } = new();
 
-    [Required, EmailAddress]
+    [EmailAddress]
     [Display(Name = "Recipient Email")]
-    public string RecipientEmail { get; set; } = "";
+    public string? RecipientEmail { get; set; }
+
+    public string? ActiveShareCode { get; set; }
+    public DateTime? ActiveShareCodeExpiresAt { get; set; }
+}
+
+public class RedeemShareCodeViewModel
+{
+    [Required, MaxLength(32)]
+    [Display(Name = "Share code")]
+    public string ShareCode { get; set; } = "";
 }
 
 public class ShareRecipientViewModel

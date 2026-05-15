@@ -22,6 +22,7 @@
                 <button type="button" class="view-switch-btn is-active" id="view-cards-btn" data-view-mode="cards" role="tab" aria-selected="true">Cards</button>
                 <button type="button" class="view-switch-btn" id="view-list-btn" data-view-mode="list" role="tab" aria-selected="false">List</button>
             </div>
+            <button type="button" class="btn btn-outline" id="redeem-share-open-btn" data-redeem-share-open onclick="window.openRedeemShareModal && window.openRedeemShareModal(event)">Add shared with me</button>
             <a asp-action="Create" class="btn btn-primary">+ New Entry</a>
         </div>
     </div>
@@ -31,8 +32,11 @@
         <div class="empty-state">
             <span class="empty-icon">🔒</span>
             <h2>Your vault is empty</h2>
-            <p>Add your first password entry to get started.</p>
-            <a asp-action="Create" class="btn btn-primary">Add Entry</a>
+            <p>Add your first password entry to get started, or redeem a share code from someone else.</p>
+            <div class="empty-state-actions">
+                <button type="button" class="btn btn-outline" data-redeem-share-open onclick="window.openRedeemShareModal && window.openRedeemShareModal(event)">Add shared with me</button>
+                <a asp-action="Create" class="btn btn-primary">Add Entry</a>
+            </div>
         </div>
     }
     else
@@ -252,6 +256,74 @@
         </div>
     }
 </div>
+
+<div id="redeem-share-modal" class="confirm-modal-backdrop" hidden>
+    <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="redeem-share-title">
+        <h2 id="redeem-share-title">Add shared entry</h2>
+        <p class="share-code-hint">Enter the share code you received. Each code works once and expires after 30 days.</p>
+        <form asp-action="RedeemShareCode" method="post" id="redeem-share-form">
+            @Html.AntiForgeryToken()
+            <div class="field-group">
+                <label for="redeem-share-code-input">Share code</label>
+                <input type="text" id="redeem-share-code-input" name="ShareCode" class="share-code-input" placeholder="PK-XXXX-XXXX" autocomplete="off" required maxlength="32" />
+            </div>
+            <div class="confirm-modal-actions">
+                <button type="button" class="btn btn-outline" id="redeem-share-cancel-btn">Cancel</button>
+                <button type="submit" class="btn btn-primary">Add to vault</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+(function () {
+    var modal = document.getElementById('redeem-share-modal');
+    if (!modal) return;
+
+    function openRedeemModal(e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        modal.classList.add('is-open');
+        modal.hidden = false;
+        modal.removeAttribute('hidden');
+        var input = document.getElementById('redeem-share-code-input');
+        if (input) input.focus();
+    }
+
+    function closeRedeemModal() {
+        modal.classList.remove('is-open');
+        modal.hidden = true;
+        modal.setAttribute('hidden', '');
+    }
+
+    window.openRedeemShareModal = openRedeemModal;
+    window.closeRedeemShareModal = closeRedeemModal;
+
+    document.addEventListener('click', function (e) {
+        var openBtn = e.target.closest('#redeem-share-open-btn, [data-redeem-share-open]');
+        if (openBtn) {
+            openRedeemModal(e);
+            return;
+        }
+        if (e.target.id === 'redeem-share-cancel-btn' || e.target.closest('#redeem-share-cancel-btn')) {
+            e.preventDefault();
+            closeRedeemModal();
+            return;
+        }
+        if (e.target === modal) {
+            closeRedeemModal();
+        }
+    }, true);
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && modal.classList.contains('is-open')) {
+            closeRedeemModal();
+        }
+    });
+})();
+</script>
 
 <div id="delete-confirm-modal" class="confirm-modal-backdrop" hidden>
     <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title" aria-describedby="delete-modal-message">

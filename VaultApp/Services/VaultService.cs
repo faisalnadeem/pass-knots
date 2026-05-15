@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using VaultApp.Data;
 using VaultApp.Models;
@@ -12,6 +13,9 @@ public interface IVaultService
     Task                            UpdateAsync(VaultEntryViewModel vm, string userId, string encKey);
     Task                            DeleteAsync(int id, string userId);
     Task<(bool ok, string error, bool pendingInvite)> ShareAsync(int entryId, string ownerId, string ownerKey, string recipientEmail);
+    Task<(bool ok, string error, string? shareCode, DateTime? expiresAt)> GenerateShareCodeAsync(int entryId, string ownerId, string ownerKey);
+    Task<(bool ok, string error)> RedeemShareCodeAsync(string shareCode, string consumerUserId);
+    Task<(string? shareCode, DateTime? expiresAt)> GetActiveShareCodeAsync(int entryId, string ownerId);
     Task<List<DecryptedVaultEntry>> GetSharedWithMeAsync(string userId, string encKey);
     Task<List<ShareRecipientViewModel>> GetSharedRecipientsAsync(int entryId, string ownerId);
     Task<bool>                      UnshareAsync(int sharedEntryId, string ownerId);
@@ -25,7 +29,7 @@ public class VaultService : IVaultService
     private readonly IShareInviteQueue    _inviteQueue;
     private readonly string               _shareSecret;
     private readonly string               _baseUrl;
-    private bool                          _pendingShareSchemaEnsured;
+    private static readonly TimeSpan ShareCodeLifetime = TimeSpan.FromDays(30);
 
     public VaultService(
         ApplicationDbContext db,
@@ -137,24 +141,31 @@ public class VaultService : IVaultService
             // Queue pending share for this email and invite recipient to sign up.
             var (pendingCipher, pendingIv) = _enc.Encrypt(plainPwd, BuildPendingShareKey(normalizedEmail));
             var existingPending = await _db.PendingShares.FirstOrDefaultAsync(
-                p => p.VaultEntryId == entryId && p.RecipientEmail == normalizedEmail);
+                p => p.VaultEntryId == entryId
+                     && p.RecipientEmail == normalizedEmail
+                     && p.ShareCode == null);
 
             if (existingPending is null)
             {
                 _db.PendingShares.Add(new PendingShare
                 {
                     VaultEntryId = entryId,
+                    UserId = ownerId,
                     RecipientEmail = normalizedEmail,
+                    ShareCode = null,
                     EncryptedPassword = pendingCipher,
                     IV = pendingIv,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    ExpiresAt = DateTime.UtcNow.Add(ShareCodeLifetime)
                 });
             }
             else
             {
+                existingPending.UserId = ownerId;
                 existingPending.EncryptedPassword = pendingCipher;
                 existingPending.IV = pendingIv;
                 existingPending.CreatedAt = DateTime.UtcNow;
+                existingPending.ExpiresAt = DateTime.UtcNow.Add(ShareCodeLifetime);
             }
 
             await _db.SaveChangesAsync();
@@ -204,6 +215,128 @@ public class VaultService : IVaultService
 
         await _db.SaveChangesAsync();
         return (true, "", false);
+    }
+
+    public async Task<(bool ok, string error, string? shareCode, DateTime? expiresAt)> GenerateShareCodeAsync(
+        int entryId, string ownerId, string ownerKey)
+    {
+        var entry = await _db.VaultEntries
+            .FirstOrDefaultAsync(e => e.Id == entryId && e.OwnerId == ownerId);
+        if (entry is null) return (false, "Entry not found.", null, null);
+
+        var plainPwd = _enc.Decrypt(entry.EncryptedPassword, entry.IV, ownerKey);
+        var code = await CreateUniqueShareCodeAsync();
+        var (pendingCipher, pendingIv) = _enc.Encrypt(plainPwd, BuildPendingShareKey($"code:{code}"));
+        var now = DateTime.UtcNow;
+        var expiresAt = now.Add(ShareCodeLifetime);
+
+        var existing = await _db.PendingShares
+            .Where(p => p.VaultEntryId == entryId
+                        && p.ShareCode != null
+                        && !p.IsConsumed
+                        && p.ExpiresAt > now)
+            .OrderByDescending(p => p.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        if (existing is null)
+        {
+            _db.PendingShares.Add(new PendingShare
+            {
+                VaultEntryId = entryId,
+                UserId = ownerId,
+                RecipientEmail = null,
+                ShareCode = code,
+                EncryptedPassword = pendingCipher,
+                IV = pendingIv,
+                CreatedAt = now,
+                ExpiresAt = expiresAt,
+                IsConsumed = false
+            });
+        }
+        else
+        {
+            existing.UserId = ownerId;
+            existing.ShareCode = code;
+            existing.RecipientEmail = null;
+            existing.EncryptedPassword = pendingCipher;
+            existing.IV = pendingIv;
+            existing.CreatedAt = now;
+            existing.ExpiresAt = expiresAt;
+            existing.IsConsumed = false;
+            existing.SharedWithUserId = null;
+        }
+
+        await _db.SaveChangesAsync();
+        return (true, "", code, expiresAt);
+    }
+
+    public async Task<(bool ok, string error)> RedeemShareCodeAsync(string shareCode, string consumerUserId)
+    {
+        var normalizedCode = NormalizeShareCode(shareCode);
+        if (string.IsNullOrEmpty(normalizedCode))
+            return (false, "Share code is required.");
+
+        var pending = await _db.PendingShares
+            .Include(p => p.VaultEntry)
+            .FirstOrDefaultAsync(p => p.ShareCode == normalizedCode);
+
+        if (pending is null || pending.ShareCode is null)
+            return (false, "Invalid share code.");
+
+        if (pending.IsConsumed)
+            return (false, "This share code has already been used.");
+
+        if (pending.ExpiresAt <= DateTime.UtcNow)
+            return (false, "This share code has expired.");
+
+        if (pending.UserId == consumerUserId)
+            return (false, "You cannot redeem a share code for your own entry.");
+
+        if (pending.VaultEntry is null)
+            return (false, "Entry no longer exists.");
+
+        var alreadyShared = await _db.SharedEntries.AnyAsync(s =>
+            s.VaultEntryId == pending.VaultEntryId && s.SharedWithUserId == consumerUserId);
+        if (alreadyShared)
+            return (false, "This entry is already in your vault.");
+
+        var plain = SafeDecrypt(
+            pending.EncryptedPassword,
+            pending.IV,
+            BuildPendingShareKey($"code:{normalizedCode}"));
+        if (plain.StartsWith("[Decryption failed", StringComparison.Ordinal))
+            return (false, "Unable to process this share code.");
+
+        var (shareCipher, shareIv) = _enc.Encrypt(plain, BuildShareKey(consumerUserId));
+        _db.SharedEntries.Add(new SharedEntry
+        {
+            VaultEntryId = pending.VaultEntryId,
+            SharedWithUserId = consumerUserId,
+            ReEncryptedKey = shareCipher,
+            ReEncryptedIV = shareIv,
+            SharedAt = DateTime.UtcNow
+        });
+
+        pending.IsConsumed = true;
+        pending.SharedWithUserId = consumerUserId;
+        await _db.SaveChangesAsync();
+        return (true, "");
+    }
+
+    public async Task<(string? shareCode, DateTime? expiresAt)> GetActiveShareCodeAsync(int entryId, string ownerId)
+    {
+        var now = DateTime.UtcNow;
+        var pending = await _db.PendingShares
+            .Where(p => p.VaultEntryId == entryId
+                        && p.UserId == ownerId
+                        && p.ShareCode != null
+                        && !p.IsConsumed
+                        && p.ExpiresAt > now)
+            .OrderByDescending(p => p.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        if (pending is null) return (null, null);
+        return (pending.ShareCode, pending.ExpiresAt);
     }
 
     public async Task<List<DecryptedVaultEntry>> GetSharedWithMeAsync(string userId, string encKey)
@@ -269,7 +402,7 @@ public class VaultService : IVaultService
 
         var pendingShares = await _db.PendingShares
             .Include(p => p.VaultEntry)
-            .Where(p => p.RecipientEmail == normalizedEmail)
+            .Where(p => p.RecipientEmail == normalizedEmail && p.ShareCode == null && !p.IsConsumed)
             .ToListAsync();
 
         foreach (var pending in pendingShares)
@@ -332,6 +465,24 @@ public class VaultService : IVaultService
     }
 
     private string BuildShareKey(string userId) => $"{_shareSecret}:{userId}";
-    private string BuildPendingShareKey(string email) => $"{_shareSecret}:pending:{email}";
+    private string BuildPendingShareKey(string scope) => $"{_shareSecret}:pending:{scope}";
 
+    private static string NormalizeShareCode(string code) =>
+        (code ?? "").Trim().ToUpperInvariant().Replace(" ", "");
+
+    private async Task<string> CreateUniqueShareCodeAsync()
+    {
+        const string alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        for (var attempt = 0; attempt < 20; attempt++)
+        {
+            var bytes = new byte[10];
+            RandomNumberGenerator.Fill(bytes);
+            var chars = bytes.Select(b => alphabet[b % alphabet.Length]).ToArray();
+            var code = $"PK-{new string(chars, 0, 4)}-{new string(chars, 4, 4)}";
+            var exists = await _db.PendingShares.AnyAsync(p => p.ShareCode == code);
+            if (!exists) return code;
+        }
+
+        throw new InvalidOperationException("Unable to generate a unique share code.");
+    }
 }

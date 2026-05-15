@@ -42,7 +42,25 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<PendingShare>()
+            .HasOne(p => p.User)
+            .WithMany()
+            .HasForeignKey(p => p.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<PendingShare>()
+            .HasOne(p => p.SharedWithUser)
+            .WithMany()
+            .HasForeignKey(p => p.SharedWithUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<PendingShare>()
             .HasIndex(p => new { p.VaultEntryId, p.RecipientEmail })
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("[RecipientEmail] IS NOT NULL");
+
+        builder.Entity<PendingShare>()
+            .HasIndex(p => p.ShareCode)
+            .IsUnique()
+            .HasFilter("[ShareCode] IS NOT NULL");
     }
 }
