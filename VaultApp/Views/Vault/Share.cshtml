@@ -1,5 +1,11 @@
 @model ShareViewModel
-@{ ViewData["Title"] = "Share Entry"; }
+@{
+    ViewData["Title"] = "Share Entry";
+    var hasEmailErrors = ViewData.ModelState["RecipientEmail"]?.Errors.Count > 0;
+    var defaultShareMode = hasEmailErrors == true
+        ? "email"
+        : (!string.IsNullOrEmpty(Model.ActiveShareCode) ? "code" : "email");
+}
 
 <div class="form-page">
     <div class="form-card">
@@ -40,8 +46,13 @@
             }
         </div>
 
-        <div class="share-section">
-            <h2>Share by email</h2>
+        <div class="share-tabs">
+            <div class="view-switch share-mode-switch" role="tablist" aria-label="Share method">
+                <button type="button" class="view-switch-btn @(defaultShareMode == "email" ? "is-active" : null)" id="share-email-tab" data-share-mode="email" role="tab" aria-selected="@(defaultShareMode == "email" ? "true" : "false")" aria-controls="share-email-panel">Share by Email</button>
+                <button type="button" class="view-switch-btn @(defaultShareMode == "code" ? "is-active" : null)" id="share-code-tab" data-share-mode="code" role="tab" aria-selected="@(defaultShareMode == "code" ? "true" : "false")" aria-controls="share-code-panel">Share by Code</button>
+            </div>
+
+            <div id="share-email-panel" class="share-tab-panel" role="tabpanel" aria-labelledby="share-email-tab" @(defaultShareMode == "code" ? "hidden" : null)>
             <form asp-action="Share" method="post">
                 @Html.AntiForgeryToken()
                 <input asp-for="VaultEntryId" type="hidden" />
@@ -69,14 +80,13 @@
                     <span asp-validation-for="RecipientEmail" class="field-error"></span>
                 </div>
 
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Share by Email</button>
+                <div class="share-tab-actions">
+                    <button type="submit" class="btn btn-outline">Share by Email</button>
                 </div>
             </form>
-        </div>
+            </div>
 
-        <div class="share-section share-section-code">
-            <h2>Share by code</h2>
+            <div id="share-code-panel" class="share-tab-panel" role="tabpanel" aria-labelledby="share-code-tab" @(defaultShareMode == "code" ? null : "hidden")>
             <p class="share-code-hint">
                 Anyone with the code can add this entry only once.
                 <span class="share-code-warning">Copy the code before leaving the page.</span>
@@ -102,16 +112,35 @@
                 <input type="hidden" name="vaultEntryId" value="@Model.VaultEntryId" />
                 <button type="submit" class="btn btn-outline">Generate Share Code</button>
             </form>
-        </div>
-
-        <div class="form-actions share-page-footer">
-            <a asp-action="Index" class="btn btn-outline">Back to Vault</a>
+            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
+        (function () {
+            const emailTab = document.getElementById('share-email-tab');
+            const codeTab = document.getElementById('share-code-tab');
+            const emailPanel = document.getElementById('share-email-panel');
+            const codePanel = document.getElementById('share-code-panel');
+            if (!emailTab || !codeTab || !emailPanel || !codePanel) return;
+
+            function setShareMode(mode) {
+                const showCode = mode === 'code';
+                emailPanel.hidden = showCode;
+                codePanel.hidden = !showCode;
+                emailTab.classList.toggle('is-active', !showCode);
+                emailTab.setAttribute('aria-selected', showCode ? 'false' : 'true');
+                codeTab.classList.toggle('is-active', showCode);
+                codeTab.setAttribute('aria-selected', showCode ? 'true' : 'false');
+            }
+
+            emailTab.addEventListener('click', () => setShareMode('email'));
+            codeTab.addEventListener('click', () => setShareMode('code'));
+            setShareMode('@defaultShareMode');
+        })();
+
         document.getElementById('copy-share-code-btn')?.addEventListener('click', async () => {
             const code = document.getElementById('active-share-code')?.textContent?.trim();
             if (!code) return;

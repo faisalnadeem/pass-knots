@@ -732,14 +732,16 @@ body {
   }
 }
 
-.share-section {
+.share-tabs {
   margin-top: 1.75rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--border2);
 }
-.share-section h2 {
-  font-size: 1rem;
-  margin-bottom: .75rem;
+.share-mode-switch {
+  margin-bottom: 1.25rem;
+}
+.share-tab-panel[hidden] {
+  display: none;
 }
 .share-code-hint {
   color: var(--text2);
@@ -775,13 +777,13 @@ body {
   margin-top: .5rem;
   margin-bottom: 0;
 }
+.share-tab-actions,
 .share-code-generate-form {
   margin-top: .5rem;
 }
-.share-page-footer {
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border2);
+.share-tab-actions {
+  display: flex;
+  justify-content: flex-start;
 }
 .share-code-input {
   width: 100%;
