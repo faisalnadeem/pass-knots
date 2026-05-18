@@ -22,7 +22,6 @@
                 <button type="button" class="view-switch-btn is-active" id="view-list-btn" data-view-mode="list" role="tab" aria-selected="true">List</button>
                 <button type="button" class="view-switch-btn" id="view-cards-btn" data-view-mode="cards" role="tab" aria-selected="false">Cards</button>
             </div>
-            <button type="button" class="btn btn-outline" id="redeem-share-open-btn" data-redeem-share-open onclick="window.openRedeemShareModal && window.openRedeemShareModal(event)">Add shared with me</button>
             <a asp-action="Create" class="btn btn-primary">+ New Entry</a>
         </div>
     </div>
@@ -34,7 +33,7 @@
             <h2>Your vault is empty</h2>
             <p>Add your first password entry to get started, or redeem a share code from someone else.</p>
             <div class="empty-state-actions">
-                <button type="button" class="btn btn-outline" data-redeem-share-open onclick="window.openRedeemShareModal && window.openRedeemShareModal(event)">Add shared with me</button>
+                <button type="button" class="btn btn-outline" data-redeem-share-open onclick="window.openRedeemShareModal && window.openRedeemShareModal(event)">Add by Shared Code</button>
                 <a asp-action="Create" class="btn btn-primary">Add Entry</a>
             </div>
         </div>
@@ -114,9 +113,12 @@
                 </div>
             }
 
+            <div class="section-header">
+                <h2 class="section-title">Shared with me</h2>
+                <button type="button" class="btn btn-outline" data-redeem-share-open onclick="window.openRedeemShareModal && window.openRedeemShareModal(event)">Add by Shared Code</button>
+            </div>
             @if (shared.Count > 0)
             {
-                <h2 class="section-title">Shared with me</h2>
                 <div class="entries-grid">
                     @foreach (var item in shared)
                     {
@@ -213,9 +215,12 @@
                 </div>
             }
 
+            <div class="section-header">
+                <h2 class="section-title">Shared with me</h2>
+                <button type="button" class="btn btn-outline" id="redeem-share-open-btn" data-redeem-share-open onclick="window.openRedeemShareModal && window.openRedeemShareModal(event)">Add by Shared Code</button>
+            </div>
             @if (shared.Count > 0)
             {
-                <h2 class="section-title">Shared with me</h2>
                 <div class="entries-list">
                     @foreach (var item in shared)
                     {

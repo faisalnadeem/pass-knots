@@ -5,15 +5,16 @@
     <div class="form-card">
         <div class="form-card-header">
             <a asp-action="Index" class="back-link">← Vault</a>
-            <h1>Share Entry</h1>
-        </div>
-
-        <div class="share-info">
-            <span class="share-info-icon">🔗</span>
-            <div>
-                <strong>@Model.SiteName</strong>
-                <p>Share by email or generate a one-time code (valid 30 days, single use).</p>
-            </div>
+            <h1 class="share-page-title">
+                <span class="share-page-title-leading">
+                    <span>Share Entry</span>
+                    <span class="info-tooltip">
+                        <button type="button" class="info-tooltip-trigger" aria-describedby="share-page-info-tooltip" aria-label="How sharing works">i</button>
+                        <span id="share-page-info-tooltip" class="info-tooltip-content" role="tooltip">Share by email or generate a one-time code (valid 30 days). Each code can only be used once.</span>
+                    </span>
+                </span>
+                <span class="share-entry-name">@Model.SiteName</span>
+            </h1>
         </div>
 
         <div class="share-existing">
@@ -64,7 +65,6 @@
                 }
 
                 <div class="field-group">
-                    <label asp-for="RecipientEmail">Recipient's Email</label>
                     <input asp-for="RecipientEmail" type="email" placeholder="friend@example.com" />
                     <span asp-validation-for="RecipientEmail" class="field-error"></span>
                 </div>
@@ -78,7 +78,7 @@
         <div class="share-section share-section-code">
             <h2>Share by code</h2>
             <p class="share-code-hint">
-                Anyone with the code can add this entry once.
+                Anyone with the code can add this entry only once.
                 <span class="share-code-warning">Copy the code before leaving the page.</span>
             </p>
 

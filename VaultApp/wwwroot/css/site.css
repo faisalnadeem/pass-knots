@@ -474,6 +474,21 @@ body {
 }
 
 /* ── Section title ──────────────────────────────────────────────────────────── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  padding-bottom: .5rem;
+  border-bottom: 1px solid var(--border);
+}
+.section-header .section-title {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
 .section-title {
   font-size: 1.1rem; font-weight: 600; color: var(--text2);
   margin-bottom: 1rem;
@@ -495,15 +510,81 @@ body {
   justify-content: center;
 }
 
-/* ── Share info box ─────────────────────────────────────────────────────────── */
-.share-info {
-  display: flex; gap: 1rem; align-items: flex-start;
-  background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm);
-  padding: 1rem 1.2rem; margin-bottom: 1.5rem;
+/* ── Share page header ──────────────────────────────────────────────────────── */
+.share-page-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
 }
-.share-info-icon { font-size: 1.5rem; flex-shrink: 0; }
-.share-info strong { display: block; margin-bottom: .3rem; }
-.share-info p { font-size: .85rem; color: var(--text2); line-height: 1.5; }
+.share-page-title-leading {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+}
+.share-entry-name {
+  font-weight: 600;
+  color: var(--text);
+  margin-left: auto;
+  text-align: right;
+  flex-shrink: 0;
+}
+.info-tooltip {
+  position: relative;
+  display: inline-flex;
+}
+.info-tooltip-trigger {
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  border: 1px solid var(--text3);
+  background: transparent;
+  color: var(--text2);
+  font-size: .72rem;
+  font-weight: 700;
+  font-style: italic;
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1;
+  padding: 0;
+  cursor: help;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.info-tooltip-trigger:hover,
+.info-tooltip-trigger:focus-visible {
+  color: var(--text);
+  border-color: var(--text2);
+  outline: none;
+}
+.info-tooltip-content {
+  position: absolute;
+  left: 0;
+  top: calc(100% + .45rem);
+  width: max-content;
+  max-width: 16rem;
+  padding: .55rem .75rem;
+  font-size: .8rem;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--text);
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .15s ease, visibility .15s ease;
+  z-index: 20;
+}
+.info-tooltip:hover .info-tooltip-content,
+.info-tooltip:focus-within .info-tooltip-content {
+  opacity: 1;
+  visibility: visible;
+}
 .share-existing {
   background: var(--bg3);
   border: 1px solid var(--border);

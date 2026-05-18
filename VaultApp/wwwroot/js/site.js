@@ -230,11 +230,12 @@ const vaultSearchInput = document.getElementById('vault-search');
 
 function toggleSectionTitles(viewContainer) {
     if (!viewContainer) return;
-    viewContainer.querySelectorAll('.section-title').forEach(title => {
-        const sectionBody = title.nextElementSibling;
+    viewContainer.querySelectorAll('.section-header').forEach(header => {
+        if (header.querySelector('[data-redeem-share-open]')) return;
+        const sectionBody = header.nextElementSibling;
         if (!sectionBody) return;
         const visibleEntries = sectionBody.querySelectorAll('.entry-details-trigger:not([hidden])').length;
-        title.hidden = visibleEntries === 0;
+        header.hidden = visibleEntries === 0;
     });
 }
 
