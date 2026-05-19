@@ -12,7 +12,7 @@
     <div class="noise"></div>
 
     <nav class="topbar">
-        <a class="brand" asp-controller="Home" asp-action="Index">
+        <a class="brand" asp-controller="@(User.Identity?.IsAuthenticated == true ? "Vault" : "Home")" asp-action="Index">
             <span class="brand-icon">⬡</span>
             <span class="brand-text">PassKnots</span>
         </a>
