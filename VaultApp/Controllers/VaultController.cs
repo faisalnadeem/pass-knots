@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using VaultApp.Models;
+using VaultApp.Models.Api;
 using VaultApp.Services;
 
 namespace VaultApp.Controllers;
@@ -129,9 +130,7 @@ public class VaultController : Controller
             return View(model);
         }
 
-        TempData["Success"] = pendingInvite
-            ? "This entry has been shared with the user. It will be visible once they approve the request through the email sent to them."
-            : $"Entry shared with {model.RecipientEmail}.";
+        TempData["Success"] = ShareEntryResponse.GetSuccessMessage(pendingInvite, model.RecipientEmail);
         return RedirectToAction(nameof(Index));
     }
 

@@ -103,8 +103,23 @@ public class ShareEntryRequest
 
 public class ShareEntryResponse
 {
+    /// <summary>True when the recipient has no account yet and must approve via the invite email.</summary>
     public bool PendingInvite { get; set; }
+
+    /// <summary>User-facing success text (pending invite vs. shared with existing user).</summary>
     public string Message { get; set; } = "";
+
+    public static ShareEntryResponse FromShareResult(bool pendingInvite, string recipientEmail) =>
+        new()
+        {
+            PendingInvite = pendingInvite,
+            Message = GetSuccessMessage(pendingInvite, recipientEmail)
+        };
+
+    public static string GetSuccessMessage(bool pendingInvite, string recipientEmail) =>
+        pendingInvite
+            ? "This entry has been shared with the user. It will be visible once they approve the request through the email sent to them."
+            : $"Entry shared with {recipientEmail}.";
 }
 
 public class ShareRecipientDto

@@ -199,7 +199,10 @@ public class VaultApiController : ControllerBase
         }).ToList());
     }
 
-    /// <summary>Share an entry with another user by email.</summary>
+    /// <summary>
+    /// Share an entry with another user by email.
+    /// Returns a success message: pending invite when the recipient has no account, otherwise confirmation with their email.
+    /// </summary>
     [HttpPost("entries/{id:int}/share")]
     [ProducesResponseType(typeof(ShareEntryResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -217,11 +220,7 @@ public class VaultApiController : ControllerBase
         if (!ok)
             return BadRequest(new { error });
 
-        var message = pendingInvite
-            ? "This entry has been shared. It will be visible once the recipient approves via email."
-            : $"Entry shared with {model.RecipientEmail}.";
-
-        return Ok(new ShareEntryResponse { PendingInvite = pendingInvite, Message = message });
+        return Ok(ShareEntryResponse.FromShareResult(pendingInvite, model.RecipientEmail));
     }
 
     /// <summary>Generate a one-time share code (30-day expiry).</summary>
