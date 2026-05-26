@@ -105,6 +105,11 @@ body {
   gap: 1rem;
   flex-wrap: wrap;
 }
+.site-footer-start {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+}
 .site-footer-brand {
   display: inline-flex;
   align-items: center;
@@ -114,6 +119,17 @@ body {
   color: var(--text3);
 }
 .site-footer-brand .brand-icon { color: var(--accent); font-size: 1rem; }
+.site-footer-credit {
+  font-size: .8rem;
+  color: var(--text3);
+  margin: 0;
+}
+.site-footer-credit a {
+  color: var(--text2);
+  text-decoration: none;
+  transition: color .15s;
+}
+.site-footer-credit a:hover { color: var(--accent); }
 .site-footer-nav {
   display: flex;
   align-items: center;
