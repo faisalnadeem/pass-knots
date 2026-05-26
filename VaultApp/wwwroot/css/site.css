@@ -201,6 +201,26 @@ body {
   color: var(--text) !important;
 }
 .legal-emphasis strong { color: var(--accent); font-weight: 600; }
+.legal-inline-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+.legal-inline-link:hover { text-decoration: underline; }
+.legal-subsection-title {
+  font-size: .925rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 1.1rem 0 .6rem;
+}
+.legal-subsection-title:first-of-type { margin-top: 0; }
+.legal-caps-intro {
+  font-size: .85rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--text) !important;
+  margin-bottom: .75rem !important;
+}
 .legal-list {
   margin: 0 0 .85rem 1.25rem;
   padding: 0;

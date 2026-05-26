@@ -13,4 +13,6 @@ public class HomeController : Controller
     }
 
     public IActionResult Privacy() => View();
+
+    public IActionResult Terms() => View();
 }
