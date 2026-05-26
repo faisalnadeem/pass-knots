@@ -55,7 +55,25 @@ body {
   text-decoration: none; color: var(--text);
   font-family: var(--mono); font-size: 1.1rem; font-weight: 700;
 }
-.brand-icon { color: var(--accent); font-size: 1.3rem; }
+.site-logo {
+  color: var(--accent);
+  line-height: 1;
+  flex-shrink: 0;
+}
+.site-logo--sm { font-size: 1rem; }
+.site-logo--md { font-size: 1.3rem; }
+.site-logo--lg {
+  font-size: 2.5rem;
+  display: block;
+  margin: 0 auto .75rem;
+}
+.site-logo--xl {
+  font-size: 3.25rem;
+  display: block;
+  margin: 0 auto 1.25rem;
+}
+.site-footer-brand .site-logo { display: inline-flex; margin: 0; }
+.brand .site-logo { display: inline-flex; margin: 0; }
 .nav-actions { display: flex; align-items: center; gap: 1rem; }
 .nav-user {
   font-size: .8rem; color: var(--text3);
@@ -118,7 +136,6 @@ body {
   font-size: .85rem;
   color: var(--text3);
 }
-.site-footer-brand .brand-icon { color: var(--accent); font-size: 1rem; }
 .site-footer-credit {
   font-size: .8rem;
   color: var(--text3);
@@ -153,6 +170,7 @@ body {
   text-align: center;
   margin-bottom: 3rem;
 }
+.legal-hero .site-logo--lg { margin-bottom: 1rem; }
 .legal-hero .hero-badge { margin-bottom: 1.25rem; }
 .legal-title {
   font-size: clamp(2rem, 5vw, 2.75rem);
@@ -358,7 +376,6 @@ body {
   box-shadow: var(--shadow);
 }
 .auth-header { text-align: center; margin-bottom: 2rem; }
-.auth-icon { font-size: 2.5rem; display: block; margin-bottom: .75rem; color: var(--accent); }
 .auth-header h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: .4rem; }
 .auth-header p  { color: var(--text2); font-size: .9rem; }
 .auth-footer    { margin-top: 1.5rem; text-align: center; color: var(--text2); font-size: .875rem; }

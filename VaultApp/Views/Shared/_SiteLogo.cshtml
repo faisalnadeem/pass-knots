@@ -1,0 +1,5 @@
+@model string?
+@{
+    var size = string.IsNullOrWhiteSpace(Model) ? "md" : Model;
+}
+<span class="site-logo site-logo--@size" aria-hidden="true">⬡</span>
