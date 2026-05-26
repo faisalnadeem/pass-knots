@@ -34,17 +34,30 @@
         </div>
     </nav>
 
-    <main class="main-content">
-        @if (TempData["Success"] != null)
-        {
-            <div class="alert alert-success">@TempData["Success"]</div>
-        }
-        @if (TempData["Error"] != null)
-        {
-            <div class="alert alert-error">@TempData["Error"]</div>
-        }
-        @RenderBody()
-    </main>
+    <div class="site-shell">
+        <main class="main-content">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success">@TempData["Success"]</div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-error">@TempData["Error"]</div>
+            }
+            @RenderBody()
+        </main>
+
+        <footer class="site-footer">
+            <div class="site-footer-inner">
+                <span class="site-footer-brand">
+                    <span class="brand-icon">⬡</span> PassKnots
+                </span>
+                <nav class="site-footer-nav" aria-label="Footer">
+                    <a asp-controller="Home" asp-action="Privacy">Privacy</a>
+                </nav>
+            </div>
+        </footer>
+    </div>
 
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
