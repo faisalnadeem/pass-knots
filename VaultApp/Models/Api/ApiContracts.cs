@@ -31,6 +31,20 @@ public class ApiLoginRequest
     public string EncryptionKey { get; set; } = "";
 }
 
+public class ApiDeleteAccountRequest
+{
+    [Required]
+    public string Password { get; set; } = "";
+
+    [Required]
+    public string EncryptionKey { get; set; } = "";
+}
+
+public class DeleteAccountResponse
+{
+    public string Message { get; set; } = "";
+}
+
 public class AuthTokenResponse
 {
     public string Token { get; set; } = "";

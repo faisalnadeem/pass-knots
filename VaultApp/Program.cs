@@ -65,6 +65,7 @@ builder.Services.AddSession(o =>
 builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IVaultService, VaultService>();
+builder.Services.AddScoped<IUserAccountService, UserAccountService>();
 builder.Services.AddSingleton<IShareInviteQueue, ShareInviteQueue>();
 builder.Services.AddHostedService<ShareInviteWorker>();
 builder.Services.AddControllersWithViews();

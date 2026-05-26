@@ -17,20 +17,25 @@ public class AuthApiController : ControllerBase
     private readonly IEncryptionService _enc;
     private readonly IVaultService _vault;
     private readonly IJwtTokenService _jwt;
+    private readonly IUserAccountService _accounts;
 
     public AuthApiController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         IEncryptionService enc,
         IVaultService vault,
-        IJwtTokenService jwt)
+        IJwtTokenService jwt,
+        IUserAccountService accounts)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _enc = enc;
         _vault = vault;
         _jwt = jwt;
+        _accounts = accounts;
     }
+
+    private string UserId => _userManager.GetUserId(User)!;
 
     /// <summary>Register a new account and receive a JWT.</summary>
     [HttpPost("register")]
@@ -132,5 +137,39 @@ public class AuthApiController : ControllerBase
     public IActionResult Logout()
     {
         return NoContent();
+    }
+
+    /// <summary>
+    /// Permanently delete the authenticated user's account and all associated vault data.
+    /// Requires password and encryption key confirmation.
+    /// </summary>
+    [HttpDelete("account")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [ProducesResponseType(typeof(DeleteAccountResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<DeleteAccountResponse>> DeleteAccount([FromBody] ApiDeleteAccountRequest model)
+    {
+        if (!ModelState.IsValid)
+            return ValidationProblem(ModelState);
+
+        var (ok, error) = await _accounts.DeleteAccountAsync(
+            UserId, model.Password, model.EncryptionKey);
+
+        if (!ok)
+        {
+            if (string.Equals(error, "User not found.", StringComparison.Ordinal))
+                return NotFound(new { error });
+
+            if (string.Equals(error, "Invalid credentials.", StringComparison.Ordinal))
+                return Unauthorized(new { error });
+
+            return BadRequest(new { error });
+        }
+
+        return Ok(new DeleteAccountResponse
+        {
+            Message = "Your account has been deleted successfully."
+        });
     }
 }
