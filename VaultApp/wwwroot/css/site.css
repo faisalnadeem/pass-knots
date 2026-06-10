@@ -547,6 +547,10 @@ body {
 .entry-details-trigger {
   cursor: pointer;
 }
+.entry-details-trigger[hidden],
+.section-header[hidden] {
+  display: none !important;
+}
 .entry-details-trigger:focus-visible {
   outline: 2px solid rgba(74,222,128,.45);
   outline-offset: 2px;
