@@ -33,9 +33,16 @@
 
             <div class="field-group">
                 <label asp-for="Password">Password</label>
-                <div class="input-eye">
-                    <input asp-for="Password" type="password" id="vault-pwd" autocomplete="new-password" />
-                    <button type="button" class="eye-btn" data-target="vault-pwd">👁</button>
+                <div class="password-input-row">
+                    <div class="input-eye">
+                        <input type="password"
+                               name="Password"
+                               id="vault-pwd"
+                               value="@Model.Password"
+                               autocomplete="current-password" />
+                        <button type="button" class="eye-btn" data-target="vault-pwd" title="Show password" aria-label="Show password">👁</button>
+                    </div>
+                    <button type="button" class="btn btn-outline btn-sm copy-btn" data-target="vault-pwd">Copy</button>
                 </div>
                 <button type="button" class="btn-generate" id="gen-btn">Generate strong password</button>
                 <span asp-validation-for="Password" class="field-error"></span>

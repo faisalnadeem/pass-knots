@@ -9,6 +9,29 @@ document.querySelectorAll('.eye-btn').forEach(btn => {
     });
 });
 
+// ── Password copy ───────────────────────────────────────────────────────────────
+document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        const input = document.getElementById(btn.dataset.target);
+        if (!input?.value) return;
+
+        try {
+            await navigator.clipboard.writeText(input.value);
+        } catch {
+            const ta = document.createElement('textarea');
+            ta.value = input.value;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+        }
+
+        const prev = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = prev; }, 1500);
+    });
+});
+
 // ── Reveal vault entries ──────────────────────────────────────────────────────
 document.querySelectorAll('.btn-reveal').forEach(btn => {
     const pwd = btn.dataset.password;
